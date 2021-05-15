@@ -2,9 +2,9 @@
 
 namespace Anshu8858\VisitorTracker;
 
+use Anshu8858\VisitorTracker\Commands\VisitorTrackerCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Anshu8858\VisitorTracker\Commands\VisitorTrackerCommand;
 
 class VisitorTrackerServiceProvider extends PackageServiceProvider
 {

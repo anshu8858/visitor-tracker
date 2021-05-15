@@ -2,9 +2,9 @@
 
 namespace Anshu8858\VisitorTracker\Tests;
 
+use Anshu8858\VisitorTracker\VisitorTrackerServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Anshu8858\VisitorTracker\VisitorTrackerServiceProvider;
 
 class TestCase extends Orchestra
 {
