@@ -1,4 +1,4 @@
-# Vtrack visits on a page and visitor also
+# Track visits on a page and visitor also
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/anshu8858/visitor-tracker.svg?style=flat-square)](https://packagist.org/packages/anshu8858/visitor-tracker)
 [![GitHub Tests Action Status](https://img.shields.io/github/workflow/status/anshu8858/visitor-tracker/run-tests?label=tests)](https://github.com/anshu8858/visitor-tracker/actions?query=workflow%3Arun-tests+branch%3Amain)
