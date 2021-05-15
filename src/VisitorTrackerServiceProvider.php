@@ -3,14 +3,10 @@
 namespace Anshu8858\VisitorTracker;
 
 use Anshu8858\VisitorTracker\Commands\VisitorTrackerCommand;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
-
-
-use PragmaRX\Support\GeoIp\GeoIp;
-use PragmaRX\Support\PhpSession;
-use PragmaRX\Support\ServiceProvider as PragmaRXServiceProvider;
+use Anshu8858\VisitorTracker\Eventing\EventStorage;
 use Anshu8858\VisitorTracker\Models\Agent;
+
+
 use Anshu8858\VisitorTracker\Models\Connection;
 use Anshu8858\VisitorTracker\Models\Cookie;
 use Anshu8858\VisitorTracker\Models\Device;
@@ -34,22 +30,23 @@ use Anshu8858\VisitorTracker\Models\SqlQueryBinding;
 use Anshu8858\VisitorTracker\Models\SqlQueryBindingParameter;
 use Anshu8858\VisitorTracker\Models\SqlQueryLog;
 use Anshu8858\VisitorTracker\Models\SystemClass;
-
-use Anshu8858\VisitorTracker\Eventing\EventStorage;
 use Anshu8858\VisitorTracker\Repositories\Message as MessageRepository;
 use Anshu8858\VisitorTracker\Services\Authentication;
 use Anshu8858\VisitorTracker\Support\Cache;
+
 use Anshu8858\VisitorTracker\Support\CrawlerDetector;
 use Anshu8858\VisitorTracker\Support\Exceptions\Handler as TrackerExceptionHandler;
 use Anshu8858\VisitorTracker\Support\LanguageDetect;
 use Anshu8858\VisitorTracker\Support\MobileDetect;
 use Anshu8858\VisitorTracker\Support\UserAgentParser;
-use Anshu8858\VisitorTracker\Tracker;
-
 use Anshu8858\VisitorTracker\Vendor\Laravel\Artisan\Tables as TablesCommand;
-
+use PragmaRX\Support\GeoIp\GeoIp;
+use PragmaRX\Support\PhpSession;
 use PragmaRX\Tracker\Vendor\Laravel\Artisan\UpdateGeoIp;
 
+use Spatie\LaravelPackageTools\Package;
+
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 class VisitorTrackerServiceProvider extends PackageServiceProvider
 {
@@ -118,14 +115,14 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
     {
         parent::boot();
 
-        if (!$this->getConfig('enabled')) {
+        if (! $this->getConfig('enabled')) {
             return false;
         }
 
         //$this->loadRoutes();
         $this->registerErrorHandler();
 
-        if (!$this->getConfig('use_middleware')) {
+        if (! $this->getConfig('use_middleware')) {
             $this->bootTracker();
         }
 
@@ -283,7 +280,10 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
                 $app['tracker.authentication'],
                 $app['session.store'],
                 $app['tracker.config'],
-                new Session($sessionModel,$app['tracker.config'], new PhpSession()
+                new Session(
+                    $sessionModel,
+                    $app['tracker.config'],
+                    new PhpSession()
                 ),
                 $logRepository,
                 new Path($pathModel),
@@ -291,9 +291,9 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
                 new QueryArgument($queryArgumentModel),
                 new Agent($agentModel),
                 new Device($deviceModel),
-                new Cookie($cookieModel,$app['tracker.config'],$app['request'],$app['cookie']),
+                new Cookie($cookieModel, $app['tracker.config'], $app['request'], $app['cookie']),
                 new Domain($domainModel),
-                new Referer($refererModel,$refererSearchTermModel,$this->getAppUrl(),$app->make('PragmaRX\Tracker\Support\RefererParser')),
+                new Referer($refererModel, $refererSearchTermModel, $this->getAppUrl(), $app->make('PragmaRX\Tracker\Support\RefererParser')),
                 $routeRepository,
                 new RoutePath($routePathModel),
                 new RoutePathParameter($routePathParameterModel),
@@ -376,9 +376,10 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
     protected function instantiateModel($modelName)
     {
         $model = $this->getConfig($modelName);
-        if (!$model) {
+        if (! $model) {
             $message = "Tracker: Model not found for '$modelName'.";
             $this->app['log']->error($message);
+
             throw new \Exception($message);
         }
 
@@ -396,7 +397,7 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
     {
         $me = $this;
 
-        if (!class_exists('Illuminate\Database\Events\QueryExecuted')) {
+        if (! class_exists('Illuminate\Database\Events\QueryExecuted')) {
             $this->app['events']->listen('illuminate.query', function (
                 $query,
                 $bindings,
@@ -442,7 +443,7 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
         });
 
         $this->app['events']->listen('*', function ($object = null) use ($me) {
-            if ($me->app['tracker.events']->isOff() || !$me->isFullyBooted()) {
+            if ($me->app['tracker.events']->isOff() || ! $me->isFullyBooted()) {
                 return;
             }
 
@@ -517,7 +518,7 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
             });
         });
     }
-    
+
 
     protected function registerDatatables()
     {
@@ -548,7 +549,7 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
 
     /**
      * Register global view composers.
-     
+
     protected function registerGlobalViewComposers()
     {
         $me = $this;
@@ -588,10 +589,10 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
             }, $bindings);
 
             $all_bindings_resolved =
-                (!in_array(false, $checked_bindings, true)) ?: false;
+                (! in_array(false, $checked_bindings, true)) ?: false;
 
             if ($me->tracker &&
-                !$me->userChecked &&
+                ! $me->userChecked &&
                 $me->getConfig('log_users') &&
                 $all_bindings_resolved
             ) {
@@ -605,7 +606,7 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
      */
     public function getTracker()
     {
-        if (!$this->tracker) {
+        if (! $this->tracker) {
             $this->tracker = $this->app['tracker'];
         }
 
@@ -637,5 +638,3 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
         });
     }
 }
-
-

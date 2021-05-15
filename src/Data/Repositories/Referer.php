@@ -45,11 +45,11 @@ class Referer extends Repository
     public function store($refererUrl, $host, $domain_id)
     {
         $attributes = [
-            'url'               => $refererUrl,
-            'host'              => $host,
-            'domain_id'         => $domain_id,
-            'medium'            => null,
-            'source'            => null,
+            'url' => $refererUrl,
+            'host' => $host,
+            'domain_id' => $domain_id,
+            'medium' => null,
+            'source' => null,
             'search_terms_hash' => null,
         ];
 
@@ -80,7 +80,7 @@ class Referer extends Repository
         foreach (explode(' ', $parsed->getSearchTerm()) as $term) {
             $this->findOrCreate(
                 [
-                    'referer_id'  => $referer->id,
+                    'referer_id' => $referer->id,
                     'search_term' => $term,
                 ],
                 ['referer_id', 'search_term'],

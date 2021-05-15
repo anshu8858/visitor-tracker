@@ -10,5 +10,4 @@ class RoutePathParameter extends Model
     use HasFactory;
 
     protected $table = 'avt_route_path_parameters';
-
 }

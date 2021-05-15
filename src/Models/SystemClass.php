@@ -10,5 +10,4 @@ class SystemClass extends Model
     use HasFactory;
 
     protected $table = 'avt_system_classes';
-
 }

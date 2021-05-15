@@ -5,9 +5,6 @@ namespace App\Models\Avt;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-use PragmaRX\Support\Config;
-use PragmaRX\Tracker\Eventing\EventStorage;
-
 class Error extends Model
 {
     use HasFactory;

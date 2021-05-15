@@ -14,7 +14,7 @@ class LanguageDetect extends Agent
     public function detectLanguage()
     {
         return [
-            'preference'     => $this->getLanguagePreference(),
+            'preference' => $this->getLanguagePreference(),
             'language-range' => $this->getLanguageRange(),
         ];
     }

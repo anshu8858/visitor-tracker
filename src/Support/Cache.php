@@ -48,11 +48,11 @@ class Cache
      */
     private function extractKeys($attributes, $keys)
     {
-        if (!$keys) {
+        if (! $keys) {
             $keys = array_keys($attributes);
         }
 
-        if (!is_array($keys)) {
+        if (! is_array($keys)) {
             $keys = (array) $keys;
 
             return $keys;
@@ -84,7 +84,7 @@ class Cache
      */
     public function findCached($attributes, $keys, $identifier = null)
     {
-        if (!$this->config->get('cache_enabled')) {
+        if (! $this->config->get('cache_enabled')) {
             return;
         }
 

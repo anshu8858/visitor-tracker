@@ -40,11 +40,11 @@ class UserAgentParser
 
     protected function getUserAgent($userAgent)
     {
-        if (!empty($userAgent)) {
+        if (! empty($userAgent)) {
             return $userAgent;
         }
 
-        if (isset($_SERVER['HTTP_USER_AGENT']) && !empty($_SERVER['HTTP_USER_AGENT'])) {
+        if (isset($_SERVER['HTTP_USER_AGENT']) && ! empty($_SERVER['HTTP_USER_AGENT'])) {
             return $_SERVER['HTTP_USER_AGENT'];
         }
 

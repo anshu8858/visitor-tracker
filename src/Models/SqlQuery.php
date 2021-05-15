@@ -66,7 +66,7 @@ class SqlQuery extends Model
 
     public function fire()
     {
-        if (!$this->logRepository->getCurrentLogId()) {
+        if (! $this->logRepository->getCurrentLogId()) {
             return;
         }
 
@@ -100,7 +100,7 @@ class SqlQuery extends Model
         $time = $query['time'];
         $name = $query['name'];
 
-        if (!$this->sqlQueryIsLoggable($sqlQuery)) {
+        if (! $this->sqlQueryIsLoggable($sqlQuery)) {
             return;
         }
 
@@ -111,9 +111,9 @@ class SqlQuery extends Model
 
         $sqlQueryId = $this->findOrCreate(
             [
-                'sha1'          => sha1($sqlQuery),
-                'statement'     => $sqlQuery,
-                'time'          => $time,
+                'sha1' => sha1($sqlQuery),
+                'statement' => $sqlQuery,
+                'time' => $time,
                 'connection_id' => $connectionId,
             ],
             ['sha1']
@@ -136,8 +136,8 @@ class SqlQuery extends Model
 
                             // unfortunately laravel uses question marks,
                             // but hopefully someday this will change
-                            'name'                  => '?',
-                            'value'                 => $value,
+                            'name' => '?',
+                            'value' => $value,
                         ]
                     );
                 }
@@ -146,7 +146,7 @@ class SqlQuery extends Model
 
         $this->sqlQueryLogRepository->create(
             [
-                'log_id'       => $this->logRepository->getCurrentLogId(),
+                'log_id' => $this->logRepository->getCurrentLogId(),
                 'sql_query_id' => $sqlQueryId,
             ]
         );

@@ -2,10 +2,10 @@
 
 namespace App\Models\Avt;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+use Illuminate\Database\Eloquent\Model;
 use PragmaRX\Support\Config;
 use PragmaRX\Support\PhpSession;
 use Ramsey\Uuid\Uuid as UUID;
@@ -32,7 +32,7 @@ class Session extends Model
     {
         list($model, $cacheKey) = $this->cache->findCached($uuid, 'uuid', 'PragmaRX\Tracker\Vendor\Laravel\Models\Session');
 
-        if (!$model) {
+        if (! $model) {
             $model = $this->newQuery()->where('uuid', $uuid)->with($this->relations)->first();
 
             $this->cache->cachePut($cacheKey, $model);
@@ -44,6 +44,7 @@ class Session extends Model
     public function getCurrentId($sessionInfo)
     {
         $this->setSessionData($sessionInfo);
+
         return $this->sessionGetId($sessionInfo);
     }
 
@@ -60,7 +61,7 @@ class Session extends Model
     {
         $this->sessionInfo = $sessionInfo;
 
-        if (!$this->sessionIsReliable()) {
+        if (! $this->sessionIsReliable()) {
             $this->regenerateSystemSession();
         }
 
@@ -94,7 +95,7 @@ class Session extends Model
 
     private function sessionIsKnownOrCreateSession()
     {
-        if (!$known = $this->sessionIsKnown()) {
+        if (! $known = $this->sessionIsKnown()) {
             $this->sessionSetId($this->findOrCreate($this->sessionInfo, ['uuid']));
         } else {
             $session = $this->find($this->getSessionData('id'));
@@ -109,15 +110,15 @@ class Session extends Model
 
     private function sessionIsKnown()
     {
-        if (!$this->session->has($this->getSessionKey())) {
+        if (! $this->session->has($this->getSessionKey())) {
             return false;
         }
 
-        if (!$this->getSessionData('uuid') == $this->getSystemSessionId()) {
+        if (! $this->getSessionData('uuid') == $this->getSystemSessionId()) {
             return false;
         }
 
-        if (!$this->findByUuid($this->getSessionData('uuid'))) {
+        if (! $this->findByUuid($this->getSessionData('uuid'))) {
             return false;
         }
 
@@ -135,7 +136,7 @@ class Session extends Model
                 continue;
             }
             if ($sessionData[$key] !== $value) {
-                if (!isset($model)) {
+                if (! isset($model)) {
                     $model = $this->find($this->sessionInfo['id']);
                 }
 
@@ -146,7 +147,7 @@ class Session extends Model
             }
         }
 
-        if (!$wasComplete) {
+        if (! $wasComplete) {
             $this->storeSession();
         }
     }
@@ -183,7 +184,7 @@ class Session extends Model
     {
         $data = $data ?: $this->getSessionData();
 
-        if (!$data) {
+        if (! $data) {
             $this->resetSessionUuid($data);
             $this->sessionIsKnownOrCreateSession();
         }
@@ -236,9 +237,10 @@ class Session extends Model
             $cacheKey = 'last-sessions';
             $result = $this->cache->findCachedWithKey($cacheKey);
 
-            if (!$result) {
+            if (! $result) {
                 $result = $query->get();
                 $this->cache->cachePut($cacheKey, $result, 1); // cache only for 1 minute
+
                 return $result;
             }
 
@@ -250,7 +252,7 @@ class Session extends Model
 
     public function userDevices($minutes, $user_id, $results)
     {
-        if (!$user_id) {
+        if (! $user_id) {
             return [];
         }
 
@@ -293,7 +295,7 @@ class Session extends Model
 
     private function checkIfUserChanged($data, $model)
     {
-        if (!is_null($model->user_id) && !is_null($data['user_id']) && $data['user_id'] !== $model->user_id) {
+        if (! is_null($model->user_id) && ! is_null($data['user_id']) && $data['user_id'] !== $model->user_id) {
             $newSession = $this->regenerateSystemSession($data);
 
             $model = $this->findByUuid($newSession['uuid']);
@@ -304,7 +306,7 @@ class Session extends Model
 
     private function checkSessionUuid()
     {
-        if (!isset($this->sessionInfo['uuid']) || !$this->sessionInfo['uuid']) {
+        if (! isset($this->sessionInfo['uuid']) || ! $this->sessionInfo['uuid']) {
             $this->sessionInfo['uuid'] = $this->getSystemSessionId();
         }
     }

@@ -51,7 +51,7 @@ class Event extends Repository
 
     public function logEvents()
     {
-        if (!$this->logRepository->getCurrentLogId()) {
+        if (! $this->logRepository->getCurrentLogId()) {
             return;
         }
 
@@ -74,11 +74,11 @@ class Event extends Repository
 
             &&
 
-            !in_array_wildcard($event['event'], $forbidden)
+            ! in_array_wildcard($event['event'], $forbidden)
 
             &&
 
-            !$this->config->get('log_only_events')
+            ! $this->config->get('log_only_events')
                 || in_array($event['event'], $this->config->get('log_only_events'));
     }
 
@@ -95,7 +95,7 @@ class Event extends Repository
 
             $this->eventLogRepository->create(
                 [
-                    'log_id'   => $this->logRepository->getCurrentLogId(),
+                    'log_id' => $this->logRepository->getCurrentLogId(),
                     'event_id' => $evenId,
                     'class_id' => $classId,
                 ]
@@ -171,7 +171,7 @@ class Event extends Repository
     {
         if (is_string($event)) {
             $event = [
-                'event'  => $event,
+                'event' => $event,
                 'object' => null,
             ];
         }

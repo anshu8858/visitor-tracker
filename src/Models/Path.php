@@ -10,5 +10,4 @@ class Path extends Model
     use HasFactory;
 
     protected $table = 'avt_paths';
-
 }
