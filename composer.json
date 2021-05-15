@@ -1,22 +1,22 @@
 {
-    "name": "vendor_slug/package_slug",
-    "description": ":package_description",
+    "name": "anshu8858/visitor-tracker",
+    "description": "track visits on a page and visitor also",
     "keywords": [
-        ":vendor_name",
+        "anshu8858",
         "laravel",
-        "package_slug"
+        "visitor-tracker"
     ],
-    "homepage": "https://github.com/vendor_slug/package_slug",
+    "homepage": "https://github.com/anshu8858/visitor-tracker",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Anshu Kushawaha",
+            "email": "20580082+anshu8858@users.noreply.github.com",
             "role": "Developer"
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": "^7.3|^7.4|^8.0",
         "spatie/laravel-package-tools": "^1.4.3",
         "illuminate/contracts": "^8.37"
     },
@@ -30,13 +30,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories"
+            "Anshu8858\\VisitorTracker\\": "src",
+            "Anshu8858\\VisitorTracker\\Database\\Factories\\": "database/factories"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests"
+            "Anshu8858\\VisitorTracker\\Tests\\": "tests"
         }
     },
     "scripts": {
@@ -50,10 +50,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Anshu8858\\VisitorTracker\\VisitorTrackerServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\SkeletonFacade"
+                "VisitorTracker": "Anshu8858\\VisitorTracker\\VisitorTrackerFacade"
             }
         }
     },

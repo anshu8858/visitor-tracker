@@ -1,6 +1,6 @@
 <?php
 
-namespace VendorName\Skeleton\Database\Factories;
+namespace Anshu8858\VisitorTracker\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 

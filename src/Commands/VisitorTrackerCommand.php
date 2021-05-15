@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Anshu8858\VisitorTracker\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class VisitorTrackerCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'visitor-tracker';
 
     public $description = 'My command';
 
