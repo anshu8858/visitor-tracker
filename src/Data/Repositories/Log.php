@@ -15,7 +15,7 @@ class Log extends Repository
 
         $model = $this->getModel();
 
-        if ($model->id && $this->route_path_id && !$model->route_path_id) {
+        if ($model->id && $this->route_path_id && ! $model->route_path_id) {
             $model->route_path_id = $this->route_path_id;
 
             $model->save();
@@ -70,6 +70,7 @@ class Log extends Repository
     {
         $log = $this->create($data);
         $this->updateRoute();
+
         return $this->setCurrentLogId($log->id);
     }
 

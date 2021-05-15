@@ -22,7 +22,7 @@ class Log extends Model
 
         $model = $this->getModel();
 
-        if ($model->id && $this->route_path_id && !$model->route_path_id) {
+        if ($model->id && $this->route_path_id && ! $model->route_path_id) {
             $model->route_path_id = $this->route_path_id;
 
             $model->save();
@@ -77,6 +77,7 @@ class Log extends Model
     {
         $log = $this->create($data);
         $this->updateRoute();
+
         return $this->setCurrentLogId($log->id);
     }
 

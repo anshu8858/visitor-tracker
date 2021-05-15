@@ -14,10 +14,10 @@ class MobileDetect extends Agent
     public function detectDevice()
     {
         return [
-            'kind'      => $this->getDeviceKind(),
-            'model'     => $this->device(),
+            'kind' => $this->getDeviceKind(),
+            'model' => $this->device(),
             'is_mobile' => $this->isMobile(),
-            'is_robot'  => $this->isRobot(),
+            'is_robot' => $this->isRobot(),
         ];
     }
 
@@ -50,7 +50,7 @@ class MobileDetect extends Agent
      */
     public function isPhone($userAgent = null, $httpHeaders = null)
     {
-        return !$this->isTablet() && !$this->isComputer();
+        return ! $this->isTablet() && ! $this->isComputer();
     }
 
     /**
@@ -60,6 +60,6 @@ class MobileDetect extends Agent
      */
     public function isComputer()
     {
-        return !$this->isMobile();
+        return ! $this->isMobile();
     }
 }

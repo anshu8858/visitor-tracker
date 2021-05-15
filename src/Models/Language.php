@@ -10,5 +10,4 @@ class Language extends Model
     use HasFactory;
 
     protected $table = 'avt_languages';
-
 }

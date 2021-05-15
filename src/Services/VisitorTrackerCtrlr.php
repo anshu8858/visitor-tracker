@@ -2,11 +2,6 @@
 
 namespace Anshu8858\VisitorTracker\Services;
 
-
-use Illuminate\Routing\Router as IlluminateRouter;
-use Illuminate\Session\Store as IlluminateSession;
-use PragmaRX\Support\Config;
-use PragmaRX\Support\GeoIp\GeoIp;
 use Anshu8858\VisitorTracker\Models\Agent;
 use Anshu8858\VisitorTracker\Models\Connection;
 use Anshu8858\VisitorTracker\Models\Cookie;
@@ -15,7 +10,6 @@ use Anshu8858\VisitorTracker\Models\Domain;
 use Anshu8858\VisitorTracker\Models\Error;
 use Anshu8858\VisitorTracker\Models\Event;
 use Anshu8858\VisitorTracker\Models\EventLog;
-use Anshu8858\VisitorTracker\Models\GeoIp as GeoIpRepository;
 use Anshu8858\VisitorTracker\Models\Language;
 use Anshu8858\VisitorTracker\Models\Log;
 use Anshu8858\VisitorTracker\Models\Path;
@@ -31,6 +25,10 @@ use Anshu8858\VisitorTracker\Models\SqlQueryBinding;
 use Anshu8858\VisitorTracker\Models\SqlQueryBindingParameter;
 use Anshu8858\VisitorTracker\Models\SqlQueryLog;
 use Anshu8858\VisitorTracker\Models\SystemClass;
+use Illuminate\Routing\Router as IlluminateRouter;
+use Illuminate\Session\Store as IlluminateSession;
+use PragmaRX\Support\Config;
+use PragmaRX\Support\GeoIp\GeoIp;
 use PragmaRX\Tracker\Services\Authentication;
 use PragmaRX\Tracker\Support\CrawlerDetector;
 use PragmaRX\Tracker\Support\LanguageDetect;
@@ -156,8 +154,8 @@ class RepositoryManager implements RepositoryManagerInterface
         return $this->routePathParameterRepository->create(
             [
                 'route_path_id' => $route_path_id,
-                'parameter'     => $parameter,
-                'value'         => $value,
+                'parameter' => $parameter,
+                'value' => $value,
             ]
         );
     }
@@ -206,7 +204,7 @@ class RepositoryManager implements RepositoryManagerInterface
                     [
                         'query_id' => $id,
                         'argument' => $argument,
-                        'value'    => empty($value) ? '' : $value,
+                        'value' => empty($value) ? '' : $value,
                     ]
                 );
             }
@@ -349,7 +347,7 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function getQueryId($query)
     {
-        if (!$query) {
+        if (! $query) {
             return;
         }
 
@@ -361,7 +359,7 @@ class RepositoryManager implements RepositoryManagerInterface
         if ($referer) {
             $url = parse_url($referer);
 
-            if (!isset($url['host'])) {
+            if (! isset($url['host'])) {
                 return;
             }
 
@@ -531,7 +529,7 @@ class RepositoryManager implements RepositoryManagerInterface
         $error_id = $this->errorRepository->findOrCreate(
             [
                 'message' => $this->errorRepository->getMessageFromThrowable($throwable),
-                'code'    => $this->errorRepository->getCodeFromThrowable($throwable),
+                'code' => $this->errorRepository->getCodeFromThrowable($throwable),
             ],
             ['message', 'code']
         );
@@ -557,10 +555,10 @@ class RepositoryManager implements RepositoryManagerInterface
     public function logSqlQuery($query, $bindings, $time, $name)
     {
         $this->sqlQueryRepository->push([
-            'query'    => $query,
+            'query' => $query,
             'bindings' => $bindings,
-            'time'     => $time,
-            'name'     => $name,
+            'time' => $time,
+            'name' => $name,
         ]);
     }
 
@@ -576,7 +574,7 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function parserIsAvailable()
     {
-        return !empty($this->userAgentParser);
+        return ! empty($this->userAgentParser);
     }
 
     public function routeIsTrackable($route)

@@ -28,12 +28,14 @@ abstract class Repository implements RepositoryInterface
     {
         $this->builder = $this->builder ?: $this->newQuery();
         $this->builder = $this->builder->where($key, $operation, $value = null);
+
         return $this;
     }
 
     public function first()
     {
         $this->result = $this->builder->first();
+
         return $this->result ? $this : null;
     }
 
@@ -41,7 +43,7 @@ abstract class Repository implements RepositoryInterface
     {
         list($model, $cacheKey) = $this->cache->findCached($id, null, $this->className);
 
-        if (!$model) {
+        if (! $model) {
             $model = $this->newQuery();
 
             if ($this->relations) {
@@ -61,7 +63,7 @@ abstract class Repository implements RepositoryInterface
 
     public function create($attributes, $model = null)
     {
-        $model = $model && !$model->exists() ? $model : $this->newModel($model);
+        $model = $model && ! $model->exists() ? $model : $this->newModel($model);
 
         foreach ($attributes as $attribute => $value) {
             if (in_array($attribute, $model->getFillable())) {
@@ -104,7 +106,7 @@ abstract class Repository implements RepositoryInterface
     {
         list($model, $cacheKey) = $this->cache->findCached($attributes, $keys, $this->className);
 
-        if (!$model) {
+        if (! $model) {
             $model = $this->newQuery($otherModel);
 
             $keys = $keys ?: array_keys($attributes);
@@ -113,7 +115,7 @@ abstract class Repository implements RepositoryInterface
                 $model = $model->where($key, $attributes[$key]);
             }
 
-            if (!$model = $model->first()) {
+            if (! $model = $model->first()) {
                 $model = $this->create($attributes, $otherModel);
 
                 $created = true;

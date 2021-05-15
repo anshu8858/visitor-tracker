@@ -2,22 +2,21 @@
 
 namespace Anshu8858\VisitorTracker;
 
+use Anshu8858\VisitorTracker\Data\RepositoryManager as DataRepositoryManager;
+use Anshu8858\VisitorTracker\Repositories\Message as MessageRepository;
+use Anshu8858\VisitorTracker\Support\Config;
+
+use Anshu8858\VisitorTracker\Support\GeoIp\Updater as GeoIpUpdater;
+use Anshu8858\VisitorTracker\Support\IpAddress;
+use Anshu8858\VisitorTracker\Support\Minutes;
+
 use Illuminate\Foundation\Application as Laravel;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
-
-use Anshu8858\VisitorTracker\Support\Config;
-use Anshu8858\VisitorTracker\Support\GeoIp\Updater as GeoIpUpdater;
-use Anshu8858\VisitorTracker\Support\IpAddress;
-
-use Anshu8858\VisitorTracker\Data\RepositoryManager as DataRepositoryManager;
-use Anshu8858\VisitorTracker\Repositories\Message as MessageRepository;
-use Anshu8858\VisitorTracker\Support\Minutes;
 use Psr\Log\LoggerInterface;
 
 class VisitorTracker
 {
-
     protected $config;
 
     /**
@@ -80,7 +79,7 @@ class VisitorTracker
 
     public function checkCurrentUser()
     {
-        if (!$this->sessionData['user_id'] && $user_id = $this->getUserId()) {
+        if (! $this->sessionData['user_id'] && $user_id = $this->getUserId()) {
             return true;
         }
 
@@ -161,13 +160,13 @@ class VisitorTracker
     {
         return [
             'session_id' => $this->getSessionId(true),
-            'method'     => $this->request->method(),
-            'path_id'    => $this->getPathId(),
-            'query_id'   => $this->getQueryId(),
+            'method' => $this->request->method(),
+            'path_id' => $this->getPathId(),
+            'query_id' => $this->getQueryId(),
             'referer_id' => $this->getRefererId(),
-            'is_ajax'    => $this->request->ajax(),
-            'is_secure'  => $this->request->isSecure(),
-            'is_json'    => $this->request->isJson(),
+            'is_ajax' => $this->request->ajax(),
+            'is_secure' => $this->request->isSecure(),
+            'is_json' => $this->request->isJson(),
             'wants_json' => $this->request->wantsJson(),
         ];
     }
@@ -194,7 +193,7 @@ class VisitorTracker
             if (count($arguments = $this->request->query())) {
                 return $this->dataRepositoryManager->getQueryId(
                     [
-                        'query'     => array_implode('=', '|', $arguments),
+                        'query' => array_implode('=', '|', $arguments),
                         'arguments' => $arguments,
                     ]
                 );
@@ -218,7 +217,7 @@ class VisitorTracker
 
     protected function logUntrackable($item)
     {
-        if ($this->config->get('log_untrackable_sessions') && !isset($this->loggedItems[$item])) {
+        if ($this->config->get('log_untrackable_sessions') && ! isset($this->loggedItems[$item])) {
             $this->getLogger()->warning('TRACKER (unable to track item): '.$item);
 
             $this->loggedItems[$item] = $item;
@@ -231,15 +230,15 @@ class VisitorTracker
     protected function makeSessionData()
     {
         $sessionData = [
-            'user_id'      => $this->getUserId(),
-            'device_id'    => $this->getDeviceId(),
-            'client_ip'    => $this->request->getClientIp(),
-            'geoip_id'     => $this->getGeoIpId(),
-            'agent_id'     => $this->getAgentId(),
-            'referer_id'   => $this->getRefererId(),
-            'cookie_id'    => $this->getCookieId(),
-            'language_id'  => $this->getLanguageId(),
-            'is_robot'     => $this->isRobot(),
+            'user_id' => $this->getUserId(),
+            'device_id' => $this->getDeviceId(),
+            'client_ip' => $this->request->getClientIp(),
+            'geoip_id' => $this->getGeoIpId(),
+            'agent_id' => $this->getAgentId(),
+            'referer_id' => $this->getRefererId(),
+            'cookie_id' => $this->getCookieId(),
+            'language_id' => $this->getLanguageId(),
+            'is_robot' => $this->isRobot(),
 
             // The key user_agent is not present in the sessions table, but
             // it's internally used to check if the user agent changed
@@ -287,7 +286,7 @@ class VisitorTracker
 
     protected function isSqlQueriesLoggableConnection($name)
     {
-        return !in_array(
+        return ! in_array(
             $name,
             $this->config->get('do_not_log_sql_queries_connections')
         );
@@ -308,12 +307,12 @@ class VisitorTracker
 
     public function isTrackableEnvironment()
     {
-        $trackable = !in_array(
+        $trackable = ! in_array(
             $this->laravel->environment(),
             $this->config->get('do_not_track_environments')
         );
 
-        if (!$trackable) {
+        if (! $trackable) {
             $this->logUntrackable('environment '.$this->laravel->environment().' is not trackable.');
         }
 
@@ -322,12 +321,12 @@ class VisitorTracker
 
     public function isTrackableIp()
     {
-        $trackable = !IpAddress::ipv4InRange(
+        $trackable = ! IpAddress::ipv4InRange(
             $ipAddress = $this->request->getClientIp(),
             $this->config->get('do_not_track_ips')
         );
 
-        if (!$trackable) {
+        if (! $trackable) {
             $this->logUntrackable($ipAddress.' is not trackable.');
         }
 
@@ -372,7 +371,7 @@ class VisitorTracker
             $this->config->get('log_routes') ||
             $this->config->get('log_exceptions');
 
-        if (!$enabled) {
+        if (! $enabled) {
             $this->logUntrackable('there are no log items enabled.');
         }
 
@@ -394,10 +393,10 @@ class VisitorTracker
     protected function notRobotOrTrackable()
     {
         $trackable =
-            !$this->isRobot() ||
-            !$this->config->get('do_not_track_robots');
+            ! $this->isRobot() ||
+            ! $this->config->get('do_not_track_robots');
 
-        if (!$trackable) {
+        if (! $trackable) {
             $this->logUntrackable('tracking of robots is disabled.');
         }
 
@@ -417,13 +416,13 @@ class VisitorTracker
     public function allowConsole()
     {
         return
-            (!$this->laravel->runningInConsole()) ||
+            (! $this->laravel->runningInConsole()) ||
             $this->config->get('console_log_enabled', false);
     }
 
     public function parserIsAvailable()
     {
-        if (!$this->dataRepositoryManager->parserIsAvailable()) {
+        if (! $this->dataRepositoryManager->parserIsAvailable()) {
             $this->logger->error(trans('tracker::tracker.regex_file_not_available'));
 
             return false;
@@ -434,11 +433,11 @@ class VisitorTracker
 
     public function routeIsTrackable()
     {
-        if (!$this->route) {
+        if (! $this->route) {
             return false;
         }
 
-        if (!$trackable = $this->dataRepositoryManager->routeIsTrackable($this->route)) {
+        if (! $trackable = $this->dataRepositoryManager->routeIsTrackable($this->route)) {
             $this->logUntrackable('route '.$this->route->getCurrentRoute()->getName().' is not trackable.');
         }
 
@@ -447,7 +446,7 @@ class VisitorTracker
 
     public function pathIsTrackable()
     {
-        if (!$trackable = $this->dataRepositoryManager->pathIsTrackable($this->request->path())) {
+        if (! $trackable = $this->dataRepositoryManager->pathIsTrackable($this->request->path())) {
             $this->logUntrackable('path '.$this->request->path().' is not trackable.');
         }
 

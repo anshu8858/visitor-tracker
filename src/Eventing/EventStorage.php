@@ -11,7 +11,7 @@ class EventStorage
     public function logEvent($event, $object)
     {
         $this->events[] = [
-            'event'  => $event,
+            'event' => $event,
             'object' => $object,
         ];
     }
@@ -42,6 +42,6 @@ class EventStorage
 
     public function isOff()
     {
-        return !$this->isOn;
+        return ! $this->isOn;
     }
 }

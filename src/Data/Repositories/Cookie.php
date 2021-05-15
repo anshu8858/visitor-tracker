@@ -28,11 +28,11 @@ class Cookie extends Repository
 
     public function getId()
     {
-        if (!$this->config->get('store_cookie_tracker')) {
+        if (! $this->config->get('store_cookie_tracker')) {
             return;
         }
 
-        if (!$cookie = $this->request->cookie($this->config->get('tracker_cookie_name'))) {
+        if (! $cookie = $this->request->cookie($this->config->get('tracker_cookie_name'))) {
             $cookie = UUID::uuid4()->toString();
 
             $this->cookieJar->queue($this->config->get('tracker_cookie_name'), $cookie, 0);

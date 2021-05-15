@@ -26,9 +26,9 @@ class Route extends Model
         $forbidden = $this->config->get('do_not_track_routes');
 
         return
-            !$forbidden ||
-            !$route->currentRouteName() ||
-            !in_array_wildcard($route->currentRouteName(), $forbidden);
+            ! $forbidden ||
+            ! $route->currentRouteName() ||
+            ! in_array_wildcard($route->currentRouteName(), $forbidden);
     }
 
     public function pathIsTrackable($path)
@@ -36,9 +36,9 @@ class Route extends Model
         $forbidden = $this->config->get('do_not_track_paths');
 
         return
-            !$forbidden ||
+            ! $forbidden ||
             empty($path) ||
-            !in_array_wildcard($path, $forbidden);
+            ! in_array_wildcard($path, $forbidden);
     }
 
 

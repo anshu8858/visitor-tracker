@@ -10,5 +10,4 @@ class SqlQueryBindingParameter extends Model
     use HasFactory;
 
     protected $table = 'avt_sql_query_bindings_parameters';
-
 }

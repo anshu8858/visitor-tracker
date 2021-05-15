@@ -28,7 +28,7 @@ class Minutes
      */
     public function __construct($minutes = null)
     {
-        if (!isset($minutes)) {
+        if (! isset($minutes)) {
             return;
         }
 
