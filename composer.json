@@ -36,7 +36,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Anshu8858\\VisitorTracker\\Tests\\": "tests"
+            "Anshu8858\\VisitorTracker\\Tests\\": "tests",
+            "Database\\Factories\\":"database/factories/"
         }
     },
     "scripts": {
