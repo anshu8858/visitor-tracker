@@ -156,5 +156,4 @@ class Event extends CtrlrMgr
 
         return $event;
     }
-
 }

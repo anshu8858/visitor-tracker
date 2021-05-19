@@ -34,7 +34,7 @@ class CreateAvtSessionsTable extends Migration
                 $table->bigInteger('language_id')->unsigned()->nullable()->index();
                 $table->bigInteger('geoip_id')->unsigned()->nullable()->index();
                 $table->string('client_ip')->index();
-                $table->boolean('is_robot');                
+                $table->boolean('is_robot');
 
                 $table->timestamps();
                 $table->index('created_at');

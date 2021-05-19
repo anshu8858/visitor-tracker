@@ -2,17 +2,17 @@
 
 namespace Anshu8858\VisitorTracker;
 
-use Anshu8858\VisitorTracker\Service\VisitorTrackerMgr;
 use Anshu8858\VisitorTracker\Repositories\Message as MessageRepo;
+use Anshu8858\VisitorTracker\Service\VisitorTrackerMgr;
 use Anshu8858\VisitorTracker\Support\Minutes;
-
-use PragmaRX\Support\Config;
-use PragmaRX\Support\GeoIp\Updater as GeoIpUpdater;
-use PragmaRX\Support\IpAddress;
 
 use Illuminate\Foundation\Application as Laravel;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
+
+use PragmaRX\Support\Config;
+use PragmaRX\Support\GeoIp\Updater as GeoIpUpdater;
+use PragmaRX\Support\IpAddress;
 use Psr\Log\LoggerInterface;
 
 class VisitorTracker
@@ -77,16 +77,16 @@ class VisitorTracker
         return true;
     }
 
-/*
-    public function checkCurrentUser()
-    {
-        if (! $this->sessionData['user_id'] && $user_id = $this->getUserId()) {
-            return true;
-        }
+    /*
+        public function checkCurrentUser()
+        {
+            if (! $this->sessionData['user_id'] && $user_id = $this->getUserId()) {
+                return true;
+            }
 
-        return false;
-    }
-*/
+            return false;
+        }
+    */
     public function currentSession()
     {
         return $this->vtm->sessionRepository->getCurrent();

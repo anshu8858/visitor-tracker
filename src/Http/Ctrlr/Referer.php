@@ -78,5 +78,4 @@ class Referer extends CtrlrMgr
             );
         }
     }
-
 }

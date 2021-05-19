@@ -175,5 +175,4 @@ class CtrlrMgr implements CtrlrMgrInterface
 
         return $this->builder->newQuery();
     }
-
 }

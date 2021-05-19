@@ -99,5 +99,4 @@ class Log extends CtrlrMgr
         $this->currentLogId = null;
         $this->getModel()->delete();
     }
-
 }

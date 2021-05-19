@@ -26,7 +26,7 @@ class CreateAvtRefererSearchTermTable extends Migration
                 $table->bigIncrements('id');
 
                 $table->bigInteger('referer_id')->unsigned()->index();
-                $table->string('search_term')->index();                
+                $table->string('search_term')->index();
 
                 $table->timestamps();
                 $table->index('created_at');

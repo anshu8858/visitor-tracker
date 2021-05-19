@@ -49,6 +49,4 @@ class Base extends Eloquent
             ->where($alias.'updated_at', '>=', $minutes->getStart() ? $minutes->getStart() : 1)
             ->where($alias.'updated_at', '<=', $minutes->getEnd() ? $minutes->getEnd() : 1);
     }
-
-
 }

@@ -315,5 +315,4 @@ class Session extends CtrlrMgr
 
         return $data;
     }
-
 }

@@ -26,15 +26,15 @@ use Anshu8858\VisitorTracker\Models\SqlQueryBindingParameter;
 use Anshu8858\VisitorTracker\Models\SqlQueryLog;
 use Anshu8858\VisitorTracker\Models\SystemClass;
 
-use Illuminate\Routing\Router as IlluminateRouter;
-use Illuminate\Session\Store as IlluminateSession;
-
-use PragmaRX\Support\Config;
-use PragmaRX\Support\GeoIp\GeoIp;
-
 use Anshu8858\VisitorTracker\Support\CrawlerDetector;
 use Anshu8858\VisitorTracker\Support\LanguageDetect;
+
 use Anshu8858\VisitorTracker\Support\MobileDetect;
+use Illuminate\Routing\Router as IlluminateRouter;
+
+use Illuminate\Session\Store as IlluminateSession;
+use PragmaRX\Support\Config;
+use PragmaRX\Support\GeoIp\GeoIp;
 
 class VisitorTrackerMgr
 {
@@ -599,5 +599,4 @@ class VisitorTrackerMgr
     {
         return $this->sessionMdl->users($minutes, $results);
     }
-
 }

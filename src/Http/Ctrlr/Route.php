@@ -32,6 +32,4 @@ class Route extends CtrlrMgr
             empty($path) ||
             ! in_array_wildcard($path, $forbidden);
     }
-
-
 }
