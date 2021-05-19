@@ -1,26 +1,13 @@
 <?php
 
-namespace Anshu8858\TrackerVisitor\Models;
+namespace Anshu8858\VisitorTracker\Http\Ctrlr;
 
 use PragmaRX\Tracker\Support\RefererParser;
 
-class Referer extends Base
+class Referer extends CtrlrMgr
 {
-    protected $table = 'avt_referers';
-
-    /**
-     * @var RefererParser
-     */
     private $refererParser;
-
-    /**
-     * @var
-     */
     private $currentUrl;
-
-    /**
-     * @var
-     */
     private $searchTermModel;
 
     /**
@@ -92,8 +79,4 @@ class Referer extends Base
         }
     }
 
-    public function domain()
-    {
-        return $this->belongsTo($this->getConfig()->get('domain_model'));
-    }
 }

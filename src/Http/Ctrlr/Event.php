@@ -1,56 +1,35 @@
 <?php
 
-namespace Anshu8858\TrackerVisitor\Models;
+namespace Anshu8858\VisitorTracker\Http\Ctrlr;
 
-class Event extends Base
+class Event extends CtrlrMgr
 {
-    protected $table = 'avt_events';
-
-    /**
-     * @var EventLog
-     */
-    private $eventLogRepository;
-
-    /**
-     * @var SystemClass
-     */
-    private $systemClassRepository;
-
-    /**
-     * @var Log
-     */
-    private $logRepository;
-
-    /**
-     * @var \PragmaRX\Support\Config
-     */
+    private $eventLogCtrlr;
+    private $systemClassCtrlr;
+    private $logCtrlr;
     private $config;
-
-    /**
-     * @var \PragmaRX\Tracker\Eventing\EventStorage
-     */
     private $eventStorage;
 
     public function __construct(
         $model,
         EventStorage $eventStorage,
-        EventLog $eventLogRepository,
-        SystemClass $systemClassRepository,
-        Log $logRepository,
+        EventLog $eventLogCtrlr,
+        SystemClass $systemClassCtrlr,
+        Log $logCtrlr,
         Config $config
     ) {
         parent::__construct($model);
         
         $this->eventStorage = $eventStorage;
-        $this->eventLogRepository = $eventLogRepository;
-        $this->systemClassRepository = $systemClassRepository;
-        $this->logRepository = $logRepository;
+        $this->eventLogCtrlr = $eventLogCtrlr;
+        $this->systemClassCtrlr = $systemClassCtrlr;
+        $this->logCtrlr = $logCtrlr;
         $this->config = $config;
     }
 
     public function logEvents()
     {
-        if (! $this->logRepository->getCurrentLogId()) {
+        if (! $this->logCtrlr->getCurrentLogId()) {
             return;
         }
 
@@ -92,9 +71,9 @@ class Event extends Base
 
             $classId = $this->getClassId($objectName);
 
-            $this->eventLogRepository->create(
+            $this->eventLogCtrlr->create(
                 [
-                    'log_id' => $this->logRepository->getCurrentLogId(),
+                    'log_id' => $this->logCtrlr->getCurrentLogId(),
                     'event_id' => $evenId,
                     'class_id' => $classId,
                 ]
@@ -142,7 +121,7 @@ class Event extends Base
     private function getClassId($objectName)
     {
         return $objectName
-            ? $this->systemClassRepository->findOrCreate(
+            ? $this->systemClassCtrlr->findOrCreate(
                 ['name' => $objectName],
                 ['name']
             )
@@ -178,40 +157,4 @@ class Event extends Base
         return $event;
     }
 
-
-
-    public function allInThePeriod($minutes, $result)
-    {
-        $query =
-            $this
-                ->select(
-                    'tracker_events.id',
-                    'tracker_events.name',
-                    $this->getConnection()->raw('count('.$this->getEventLogTableName().'.id) as total')
-                )
-                ->from('tracker_events')
-                ->period($minutes, 'tracker_events_log')
-                ->join('tracker_events_log', 'tracker_events_log.event_id', '=', 'tracker_events.id')
-                ->groupBy('tracker_events.id', 'tracker_events.name')
-                ->orderBy('total', 'desc');
-
-        if ($result) {
-            return $query->get();
-        }
-
-        return $query;
-    }
-
-    private function getEventLogTableName()
-    {
-        return $this->getTablePrefix().'tracker_events_log';
-    }
-
-    /**
-     * @return string
-     */
-    private function getTablePrefix()
-    {
-        return $this->getConnection()->getTablePrefix();
-    }
 }

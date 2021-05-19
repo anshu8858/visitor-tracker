@@ -25,16 +25,18 @@ use Anshu8858\VisitorTracker\Models\SqlQueryBinding;
 use Anshu8858\VisitorTracker\Models\SqlQueryBindingParameter;
 use Anshu8858\VisitorTracker\Models\SqlQueryLog;
 use Anshu8858\VisitorTracker\Models\SystemClass;
+
 use Illuminate\Routing\Router as IlluminateRouter;
 use Illuminate\Session\Store as IlluminateSession;
+
 use PragmaRX\Support\Config;
 use PragmaRX\Support\GeoIp\GeoIp;
-use PragmaRX\Tracker\Services\Authentication;
-use PragmaRX\Tracker\Support\CrawlerDetector;
-use PragmaRX\Tracker\Support\LanguageDetect;
-use PragmaRX\Tracker\Support\MobileDetect;
 
-class RepositoryManager implements RepositoryManagerInterface
+use Anshu8858\VisitorTracker\Support\CrawlerDetector;
+use Anshu8858\VisitorTracker\Support\LanguageDetect;
+use Anshu8858\VisitorTracker\Support\MobileDetect;
+
+class VisitorTrackerMgr
 {
     private $geoIp;
     private $userAgentParser;
@@ -98,7 +100,6 @@ class RepositoryManager implements RepositoryManagerInterface
         Language $languageMdl,
         LanguageDetect $languageDetect
     ) {
-        $this->authentication = $authentication;
         $this->mobileDetect = $mobileDetect;
         $this->userAgentParser = $userAgentParser;
 
@@ -145,13 +146,13 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function createLog($data)
     {
-        $this->logRepository->createLog($data);
-        $this->sqlQueryRepository->fire();
+        $this->logMdl->createLog($data);
+        $this->sqlQueryMdl->fire();
     }
 
     private function createRoutePathParameter($route_path_id, $parameter, $value)
     {
-        return $this->routePathParameterRepository->create(
+        return $this->routePathParameterMdl->create(
             [
                 'route_path_id' => $route_path_id,
                 'parameter' => $parameter,
@@ -162,37 +163,37 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function errors($minutes, $results)
     {
-        return $this->logRepository->getErrors($minutes, $results);
+        return $this->logMdl->getErrors($minutes, $results);
     }
 
     public function events($minutes, $results)
     {
-        return $this->eventRepository->getAll($minutes, $results);
+        return $this->eventMdl->getAll($minutes, $results);
     }
 
     public function findOrCreateAgent($data)
     {
-        return $this->agentRepository->findOrCreate($data, ['name_hash']);
+        return $this->agentMdl->findOrCreate($data, ['name_hash']);
     }
 
     public function findOrCreateDevice($data)
     {
-        return $this->deviceRepository->findOrCreate($data, ['kind', 'model', 'platform', 'platform_version']);
+        return $this->deviceMdl->findOrCreate($data, ['kind', 'model', 'platform', 'platform_version']);
     }
 
     public function findOrCreateLanguage($data)
     {
-        return $this->languageRepository->findOrCreate($data, ['preference', 'language-range']);
+        return $this->languageMdl->findOrCreate($data, ['preference', 'language-range']);
     }
 
     public function findOrCreatePath($path)
     {
-        return $this->pathRepository->findOrCreate($path, ['path']);
+        return $this->pathMdl->findOrCreate($path, ['path']);
     }
 
     public function findOrCreateQuery($data)
     {
-        $id = $this->queryRepository->findOrCreate($data, ['query'], $created);
+        $id = $this->queryMdl->findOrCreate($data, ['query'], $created);
 
         if ($created) {
             foreach ($data['arguments'] as $argument => $value) {
@@ -200,7 +201,7 @@ class RepositoryManager implements RepositoryManagerInterface
                     $value = multi_implode(',', $value);
                 }
 
-                $this->queryArgumentRepository->create(
+                $this->queryArgumentMdl->create(
                     [
                         'query_id' => $id,
                         'argument' => $argument,
@@ -215,7 +216,7 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function findOrCreateSession($data)
     {
-        return $this->sessionRepository->findOrCreate($data, ['uuid']);
+        return $this->sessionMdl->findOrCreate($data, ['uuid']);
     }
 
     public function getAgentId()
@@ -225,12 +226,12 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function getAllSessions()
     {
-        return $this->sessionRepository->all();
+        return $this->sessionMdl->all();
     }
 
     public function getCookieId()
     {
-        return $this->cookieRepository->getId();
+        return $this->cookieMdl->getId();
     }
 
     public function getCurrentAgentArray()
@@ -258,10 +259,6 @@ class RepositoryManager implements RepositoryManagerInterface
         return $this->userAgentParser->originalUserAgent;
     }
 
-    public function getCurrentUserId()
-    {
-        return $this->authentication->getCurrentUserId();
-    }
 
     /**
      * @return array
@@ -275,28 +272,9 @@ class RepositoryManager implements RepositoryManagerInterface
         }
     }
 
-    private function getLanguage()
-    {
-        try {
-            return $this->languageDetect->detectLanguage();
-        } catch (\Exception $e) {
-            return;
-        }
-    }
-
-    public function getCurrentLanguage()
-    {
-        if ($languages = $this->getLanguage()) {
-            $languages['preference'] = $this->languageDetect->getLanguagePreference();
-            $languages['language-range'] = $this->languageDetect->getLanguageRange();
-        }
-
-        return $languages;
-    }
-
     public function getDomainId($domain)
     {
-        return $this->domainRepository->findOrCreate(
+        return $this->domainMdl->findOrCreate(
             ['name' => $domain],
             ['name']
         );
@@ -307,7 +285,7 @@ class RepositoryManager implements RepositoryManagerInterface
         $id = null;
 
         if ($geoIpData = $this->geoIp->searchAddr($clientIp)) {
-            $id = $this->geoIpRepository->findOrCreate(
+            $id = $this->geoIpMdl->findOrCreate(
                 $geoIpData,
                 ['latitude', 'longitude']
             );
@@ -318,12 +296,9 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function getLastSessions($minutes, $results)
     {
-        return $this->sessionRepository->last($minutes, $results);
+        return $this->sessionMdl->last($minutes, $results);
     }
 
-    /**
-     * @return mixed
-     */
     private function getOperatingSystemFamily()
     {
         try {
@@ -333,9 +308,6 @@ class RepositoryManager implements RepositoryManagerInterface
         }
     }
 
-    /**
-     * @return mixed
-     */
     private function getOperatingSystemVersion()
     {
         try {
@@ -372,7 +344,7 @@ class RepositoryManager implements RepositoryManagerInterface
 
             $domain_id = $this->getDomainId($domain);
             
-            return $this->refererRepository->store($referer, $url['host'], $domain_id);
+            return $this->refererMdl->store($referer, $url['host'], $domain_id);
         }
     }
 
@@ -417,7 +389,7 @@ class RepositoryManager implements RepositoryManagerInterface
      */
     private function getRouteId($name, $action)
     {
-        return $this->routeRepository->findOrCreate(
+        return $this->routeMdl->findOrCreate(
             ['name' => $name, 'action' => $action],
             ['name', 'action']
         );
@@ -456,7 +428,7 @@ class RepositoryManager implements RepositoryManagerInterface
      */
     private function getRoutePath($route_id, $path, &$created = null)
     {
-        return $this->routePathRepository->findOrCreate(
+        return $this->routePathMdl->findOrCreate(
             ['route_id' => $route_id, 'path' => $path],
             ['route_id', 'path'],
             $created
@@ -514,27 +486,27 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function getSessionId($sessionData, $updateLastActivity)
     {
-        return $this->sessionRepository->getCurrentId($sessionData, $updateLastActivity);
+        return $this->sessionMdl->getCurrentId($sessionData, $updateLastActivity);
     }
 
     public function getSessionLog($uuid, $results = true)
     {
-        $session = $this->sessionRepository->findByUuid($uuid);
+        $session = $this->sessionMdl->findByUuid($uuid);
 
-        return $this->logRepository->bySession($session->id, $results);
+        return $this->logMdl->bySession($session->id, $results);
     }
 
     public function handleThrowable($throwable)
     {
-        $error_id = $this->errorRepository->findOrCreate(
+        $error_id = $this->errorMdl->findOrCreate(
             [
-                'message' => $this->errorRepository->getMessageFromThrowable($throwable),
-                'code' => $this->errorRepository->getCodeFromThrowable($throwable),
+                'message' => $this->errorMdl->getMessageFromThrowable($throwable),
+                'code' => $this->errorMdl->getCodeFromThrowable($throwable),
             ],
             ['message', 'code']
         );
 
-        return $this->logRepository->updateError($error_id);
+        return $this->logMdl->updateError($error_id);
     }
 
     public function isRobot()
@@ -544,17 +516,17 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function logByRouteName($name, $minutes = null)
     {
-        return $this->logRepository->allByRouteName($name, $minutes);
+        return $this->logMdl->allByRouteName($name, $minutes);
     }
 
     public function logEvents()
     {
-        $this->eventRepository->logEvents();
+        $this->eventMdl->logEvents();
     }
 
     public function logSqlQuery($query, $bindings, $time, $name)
     {
-        $this->sqlQueryRepository->push([
+        $this->sqlQueryMdl->push([
             'query' => $query,
             'bindings' => $bindings,
             'time' => $time,
@@ -564,12 +536,12 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function pageViews($minutes, $results)
     {
-        return $this->logRepository->pageViews($minutes, $results);
+        return $this->logMdl->pageViews($minutes, $results);
     }
 
     public function pageViewsByCountry($minutes, $results)
     {
-        return $this->logRepository->pageViewsByCountry($minutes, $results);
+        return $this->logMdl->pageViewsByCountry($minutes, $results);
     }
 
     public function parserIsAvailable()
@@ -579,22 +551,22 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function routeIsTrackable($route)
     {
-        return $this->routeRepository->isTrackable($route);
+        return $this->routeMdl->isTrackable($route);
     }
 
     public function pathIsTrackable($path)
     {
-        return $this->routeRepository->pathIsTrackable($path);
+        return $this->routeMdl->pathIsTrackable($path);
     }
 
     public function setSessionData($data)
     {
-        $this->sessionRepository->setSessionData($data);
+        $this->sessionMdl->setSessionData($data);
     }
 
     public function trackEvent($event)
     {
-        $this->eventRepository->logEvent($event);
+        $this->eventMdl->logEvent($event);
     }
 
     public function trackRoute($route, $request)
@@ -606,17 +578,17 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function updateRoute($route_id)
     {
-        return $this->logRepository->updateRoute($route_id);
+        return $this->logMdl->updateRoute($route_id);
     }
 
     public function updateSessionData($data)
     {
-        return $this->sessionRepository->updateSessionData($data);
+        return $this->sessionMdl->updateSessionData($data);
     }
 
     public function userDevices($minutes, $user_id, $results)
     {
-        return $this->sessionRepository->userDevices(
+        return $this->sessionMdl->userDevices(
             $minutes,
             $user_id ?: $this->authentication->getCurrentUserId(),
             $results
@@ -625,6 +597,7 @@ class RepositoryManager implements RepositoryManagerInterface
 
     public function users($minutes, $results)
     {
-        return $this->sessionRepository->users($minutes, $results);
+        return $this->sessionMdl->users($minutes, $results);
     }
+
 }

@@ -1,16 +1,14 @@
 <?php
 
-namespace Anshu8858\TrackerVisitor\Models;
+namespace Anshu8858\VisitorTracker\Http\Ctrlr;
 
 use Carbon\Carbon;
 use PragmaRX\Support\Config;
 use PragmaRX\Support\PhpSession;
 use Ramsey\Uuid\Uuid as UUID;
 
-class Session extends Base
+class Session extends CtrlrMgr
 {
-    protected $table = 'avt_sessions';
-
     private $config;
     private $session;
     private $sessionInfo;
@@ -318,96 +316,4 @@ class Session extends Base
         return $data;
     }
 
-
-
-
-
-
-
-
-
-    public function user()
-    {
-        return $this->belongsTo($this->getConfig()->get('user_model'));
-    }
-
-    public function device()
-    {
-        return $this->belongsTo('Anshu8858\VisitorTracker\Models\Device'));
-    }
-
-    public function language()
-    {
-        return $this->belongsTo('Anshu8858\VisitorTracker\Models\Language'));
-    }
-
-    public function agent()
-    {
-        return $this->belongsTo('Anshu8858\VisitorTracker\Models\Agent'));
-    }
-
-    public function referer()
-    {
-        return $this->belongsTo('Anshu8858\VisitorTracker\Models\Referer'));
-    }
-
-    public function geoIp()
-    {
-        return $this->belongsTo('Anshu8858\VisitorTracker\Models\GeoIp'), 'geoip_id');
-    }
-
-    public function cookie()
-    {
-        return $this->belongsTo('Anshu8858\VisitorTracker\Models\Cookie'), 'cookie_id');
-    }
-
-    public function log()
-    {
-        return $this->hasMany('Anshu8858\VisitorTracker\Models\Log'));
-    }
-
-    public function getPageViewsAttribute()
-    {
-        return $this->log()->count();
-    }
-
-    public function users($minutes, $result)
-    {
-        $query = $this
-            ->select(
-                'user_id',
-                $this->getConnection()->raw('max(updated_at) as updated_at')
-            )
-            ->groupBy('user_id')
-            ->from('tracker_sessions')
-            ->period($minutes)
-            ->whereNotNull('user_id')
-            ->orderBy($this->getConnection()->raw('max(updated_at)'), 'desc');
-
-        if ($result) {
-            return $query->get();
-        }
-
-        return $query;
-    }
-
-    public function userDevices($minutes, $result, $user_id)
-    {
-        $query = $this
-            ->select(
-                'user_id',
-                $this->getConnection()->raw('max(updated_at) as updated_at')
-            )
-            ->groupBy('user_id')
-            ->from('tracker_sessions')
-            ->period($minutes)
-            ->whereNotNull('user_id')
-            ->orderBy($this->getConnection()->raw('max(updated_at)'), 'desc');
-
-        if ($result) {
-            return $query->get();
-        }
-
-        return $query;
-    }
 }

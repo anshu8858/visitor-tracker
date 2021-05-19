@@ -2,13 +2,13 @@
 
 namespace Anshu8858\VisitorTracker;
 
-use Anshu8858\VisitorTracker\Data\RepositoryManager as DataRepositoryManager;
-use Anshu8858\VisitorTracker\Repositories\Message as MessageRepository;
-use Anshu8858\VisitorTracker\Support\Config;
-
-use Anshu8858\VisitorTracker\Support\GeoIp\Updater as GeoIpUpdater;
-use Anshu8858\VisitorTracker\Support\IpAddress;
+use Anshu8858\VisitorTracker\Service\VisitorTrackerMgr;
+use Anshu8858\VisitorTracker\Repositories\Message as MessageRepo;
 use Anshu8858\VisitorTracker\Support\Minutes;
+
+use PragmaRX\Support\Config;
+use PragmaRX\Support\GeoIp\Updater as GeoIpUpdater;
+use PragmaRX\Support\IpAddress;
 
 use Illuminate\Foundation\Application as Laravel;
 use Illuminate\Http\Request;
@@ -37,29 +37,29 @@ class VisitorTracker
     /**
      * @var MessageRepository
      */
-    protected $messageRepository;
+    protected $msgRepo;
 
     public function __construct(
         Config $config,
-        DataRepositoryManager $dataRepositoryManager,
-        Request $request,
+        VisitorTrackerMgr $vtm,
+        Request $req,
         Router $route,
         LoggerInterface $logger,
         Laravel $laravel,
-        MessageRepository $messageRepository
+        MessageRepo $msgRepo
     ) {
         $this->config = $config;
-        $this->dataRepositoryManager = $dataRepositoryManager;
-        $this->request = $request;
+        $this->vtm = $vtm;
+        $this->request = $req;
         $this->route = $route;
         $this->logger = $logger;
         $this->laravel = $laravel;
-        $this->messageRepository = $messageRepository;
+        $this->msgRepo = $msgRepo;
     }
 
     public function allSessions()
     {
-        return $this->dataRepositoryManager->getAllSessions();
+        return $this->vtm->getAllSessions();
     }
 
     public function boot()
@@ -77,6 +77,7 @@ class VisitorTracker
         return true;
     }
 
+/*
     public function checkCurrentUser()
     {
         if (! $this->sessionData['user_id'] && $user_id = $this->getUserId()) {
@@ -85,31 +86,31 @@ class VisitorTracker
 
         return false;
     }
-
+*/
     public function currentSession()
     {
-        return $this->dataRepositoryManager->sessionRepository->getCurrent();
+        return $this->vtm->sessionRepository->getCurrent();
     }
 
     protected function deleteCurrentLog()
     {
-        $this->dataRepositoryManager->logRepository->delete();
+        $this->vtm->logRepository->delete();
     }
 
     public function errors($minutes, $results = true)
     {
-        return $this->dataRepositoryManager->errors(Minutes::make($minutes), $results);
+        return $this->vtm->errors(Minutes::make($minutes), $results);
     }
 
     public function events($minutes, $results = true)
     {
-        return $this->dataRepositoryManager->events(Minutes::make($minutes), $results);
+        return $this->vtm->events(Minutes::make($minutes), $results);
     }
 
     public function getAgentId()
     {
         return $this->config->get('log_user_agents')
-            ? $this->dataRepositoryManager->getAgentId()
+            ? $this->vtm->getAgentId()
             : null;
     }
 
@@ -121,15 +122,15 @@ class VisitorTracker
     public function getCookieId()
     {
         return $this->config->get('store_cookie_tracker')
-            ? $this->dataRepositoryManager->getCookieId()
+            ? $this->vtm->getCookieId()
             : null;
     }
 
     public function getDeviceId()
     {
         return $this->config->get('log_devices')
-            ? $this->dataRepositoryManager->findOrCreateDevice(
-                $this->dataRepositoryManager->getCurrentDeviceProperties()
+            ? $this->vtm->findOrCreateDevice(
+                $this->vtm->getCurrentDeviceProperties()
             )
             : null;
     }
@@ -137,19 +138,19 @@ class VisitorTracker
     public function getLanguageId()
     {
         return $this->config->get('log_languages')
-            ? $this->dataRepositoryManager->findOrCreateLanguage($this->dataRepositoryManager->getCurrentLanguage())
+            ? $this->vtm->findOrCreateLanguage($this->vtm->getCurrentLanguage())
             : null;
     }
 
     public function getDomainId($domain)
     {
-        return $this->dataRepositoryManager->getDomainId($domain);
+        return $this->vtm->getDomainId($domain);
     }
 
     public function getGeoIpId()
     {
         return $this->config->get('log_geoip')
-            ? $this->dataRepositoryManager->getGeoIpId($this->request->getClientIp())
+            ? $this->vtm->getGeoIpId($this->request->getClientIp())
             : null;
     }
 
@@ -179,7 +180,7 @@ class VisitorTracker
     public function getPathId()
     {
         return $this->config->get('log_paths')
-            ? $this->dataRepositoryManager->findOrCreatePath(
+            ? $this->vtm->findOrCreatePath(
                 [
                     'path' => $this->request->path(),
                 ]
@@ -191,7 +192,7 @@ class VisitorTracker
     {
         if ($this->config->get('log_queries')) {
             if (count($arguments = $this->request->query())) {
-                return $this->dataRepositoryManager->getQueryId(
+                return $this->vtm->getQueryId(
                     [
                         'query' => array_implode('=', '|', $arguments),
                         'arguments' => $arguments,
@@ -204,7 +205,7 @@ class VisitorTracker
     public function getRefererId()
     {
         return $this->config->get('log_referers')
-            ? $this->dataRepositoryManager->getRefererId(
+            ? $this->vtm->getRefererId(
                 $this->request->headers->get('referer')
             )
             : null;
@@ -212,7 +213,7 @@ class VisitorTracker
 
     public function getRoutePathId()
     {
-        return $this->dataRepositoryManager->getRoutePathId($this->route, $this->request);
+        return $this->vtm->getRoutePathId($this->route, $this->request);
     }
 
     protected function logUntrackable($item)
@@ -243,15 +244,15 @@ class VisitorTracker
             // The key user_agent is not present in the sessions table, but
             // it's internally used to check if the user agent changed
             // during a session.
-            'user_agent' => $this->dataRepositoryManager->getCurrentUserAgent(),
+            'user_agent' => $this->vtm->getCurrentUserAgent(),
         ];
 
-        return $this->sessionData = $this->dataRepositoryManager->checkSessionData($sessionData, $this->sessionData);
+        return $this->sessionData = $this->vtm->checkSessionData($sessionData, $this->sessionData);
     }
 
     public function getSessionId($updateLastActivity = false)
     {
-        return $this->dataRepositoryManager->getSessionId(
+        return $this->vtm->getSessionId(
             $this->makeSessionData(),
             $updateLastActivity
         );
@@ -260,7 +261,7 @@ class VisitorTracker
     public function getUserId()
     {
         return $this->config->get('log_users')
-            ? $this->dataRepositoryManager->getCurrentUserId()
+            ? $this->vtm->getCurrentUserId()
             : null;
     }
 
@@ -270,7 +271,7 @@ class VisitorTracker
     public function handleThrowable($throwable)
     {
         if ($this->config->get('log_enabled')) {
-            $this->dataRepositoryManager->handleThrowable($throwable);
+            $this->vtm->handleThrowable($throwable);
         }
     }
 
@@ -281,7 +282,7 @@ class VisitorTracker
 
     public function isRobot()
     {
-        return $this->dataRepositoryManager->isRobot();
+        return $this->vtm->isRobot();
     }
 
     protected function isSqlQueriesLoggableConnection($name)
@@ -339,7 +340,7 @@ class VisitorTracker
             $minutes = Minutes::make($minutes);
         }
 
-        return $this->dataRepositoryManager->logByRouteName($name, $minutes);
+        return $this->vtm->logByRouteName($name, $minutes);
     }
 
     public function logEvents()
@@ -349,7 +350,7 @@ class VisitorTracker
             $this->config->get('log_enabled') &&
             $this->config->get('log_events')
         ) {
-            $this->dataRepositoryManager->logEvents();
+            $this->vtm->logEvents();
         }
     }
 
@@ -386,7 +387,7 @@ class VisitorTracker
             $this->config->get('log_sql_queries') &&
             $this->isSqlQueriesLoggableConnection($name)
         ) {
-            $this->dataRepositoryManager->logSqlQuery($query, $bindings, $time, $name);
+            $this->vtm->logSqlQuery($query, $bindings, $time, $name);
         }
     }
 
@@ -405,12 +406,12 @@ class VisitorTracker
 
     public function pageViews($minutes, $results = true)
     {
-        return $this->dataRepositoryManager->pageViews(Minutes::make($minutes), $results);
+        return $this->vtm->pageViews(Minutes::make($minutes), $results);
     }
 
     public function pageViewsByCountry($minutes, $results = true)
     {
-        return $this->dataRepositoryManager->pageViewsByCountry(Minutes::make($minutes), $results);
+        return $this->vtm->pageViewsByCountry(Minutes::make($minutes), $results);
     }
 
     public function allowConsole()
@@ -422,7 +423,7 @@ class VisitorTracker
 
     public function parserIsAvailable()
     {
-        if (! $this->dataRepositoryManager->parserIsAvailable()) {
+        if (! $this->vtm->parserIsAvailable()) {
             $this->logger->error(trans('tracker::tracker.regex_file_not_available'));
 
             return false;
@@ -437,7 +438,7 @@ class VisitorTracker
             return false;
         }
 
-        if (! $trackable = $this->dataRepositoryManager->routeIsTrackable($this->route)) {
+        if (! $trackable = $this->vtm->routeIsTrackable($this->route)) {
             $this->logUntrackable('route '.$this->route->getCurrentRoute()->getName().' is not trackable.');
         }
 
@@ -446,7 +447,7 @@ class VisitorTracker
 
     public function pathIsTrackable()
     {
-        if (! $trackable = $this->dataRepositoryManager->pathIsTrackable($this->request->path())) {
+        if (! $trackable = $this->vtm->pathIsTrackable($this->request->path())) {
             $this->logUntrackable('path '.$this->request->path().' is not trackable.');
         }
 
@@ -455,9 +456,9 @@ class VisitorTracker
 
     public function routerMatched($log)
     {
-        if ($this->dataRepositoryManager->routeIsTrackable($this->route)) {
+        if ($this->vtm->routeIsTrackable($this->route)) {
             if ($log) {
-                $this->dataRepositoryManager->updateRoute(
+                $this->vtm->updateRoute(
                     $this->getRoutePathId()
                 );
             }
@@ -475,12 +476,12 @@ class VisitorTracker
 
     public function sessionLog($uuid, $results = true)
     {
-        return $this->dataRepositoryManager->getSessionLog($uuid, $results);
+        return $this->vtm->getSessionLog($uuid, $results);
     }
 
     public function sessions($minutes = 1440, $results = true)
     {
-        return $this->dataRepositoryManager->getLastSessions(Minutes::make($minutes), $results);
+        return $this->vtm->getLastSessions(Minutes::make($minutes), $results);
     }
 
     public function onlineUsers($minutes = 3, $results = true)
@@ -493,18 +494,18 @@ class VisitorTracker
         $log = $this->getLogData();
 
         if ($this->config->get('log_enabled')) {
-            $this->dataRepositoryManager->createLog($log);
+            $this->vtm->createLog($log);
         }
     }
 
     public function trackEvent($event)
     {
-        $this->dataRepositoryManager->trackEvent($event);
+        $this->vtm->trackEvent($event);
     }
 
-    public function trackVisit($route, $request)
+    public function trackVisit($route, $req)
     {
-        $this->dataRepositoryManager->trackRoute($route, $request);
+        $this->vtm->trackRoute($route, $req);
     }
 
     public function turnOff()
@@ -514,7 +515,7 @@ class VisitorTracker
 
     public function userDevices($minutes, $user_id = null, $results = true)
     {
-        return $this->dataRepositoryManager->userDevices(
+        return $this->vtm->userDevices(
             Minutes::make($minutes),
             $user_id,
             $results
@@ -523,7 +524,7 @@ class VisitorTracker
 
     public function users($minutes, $results = true)
     {
-        return $this->dataRepositoryManager->users(Minutes::make($minutes), $results);
+        return $this->vtm->users(Minutes::make($minutes), $results);
     }
 
     /**
@@ -533,7 +534,7 @@ class VisitorTracker
      */
     public function getMessages()
     {
-        return $this->messageRepository->getMessages();
+        return $this->msgRepo->getMessages();
     }
 
     /**
@@ -545,7 +546,7 @@ class VisitorTracker
     {
         $updater = new GeoIpUpdater();
         $success = $updater->updateGeoIpFiles($this->config->get('geoip_database_path'));
-        $this->messageRepository->addMessage($updater->getMessages());
+        $this->msgRepo->addMessage($updater->getMessages());
 
         return $success;
     }

@@ -2,10 +2,13 @@
 
 namespace Anshu8858\VisitorTracker;
 
+use Illuminate\Foundation\AliasLoader as IlluminateAliasLoader;
+
 use Anshu8858\VisitorTracker\Commands\VisitorTrackerCommand;
 use Anshu8858\VisitorTracker\Eventing\EventStorage;
 use Anshu8858\VisitorTracker\Models\Agent;
 
+use Anshu8858\VisitorTracker\Services\VisitorTrackerMgr;
 
 use Anshu8858\VisitorTracker\Models\Connection;
 use Anshu8858\VisitorTracker\Models\Cookie;
@@ -30,6 +33,31 @@ use Anshu8858\VisitorTracker\Models\SqlQueryBinding;
 use Anshu8858\VisitorTracker\Models\SqlQueryBindingParameter;
 use Anshu8858\VisitorTracker\Models\SqlQueryLog;
 use Anshu8858\VisitorTracker\Models\SystemClass;
+
+use Anshu8858\VisitorTracker\Http\Ctrlr\Connection as ConnectionCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Cookie as CookieCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Device as DeviceCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Domain as DomainCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Error as ErrorCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Event as EventCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\EventLog as EventLogCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\GeoIp as GeoIpModel as GeoIpModelCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Language as LanguageCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Log as LogCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Path as PathCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Query as QueryCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\QueryArgument as QueryArgumentCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Referer as RefererCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Route as RouteCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\RoutePath as RoutePathCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\RoutePathParameter as RoutePathParameterCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\Session as SessionCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\SqlQuery as SqlQueryCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\SqlQueryBinding as SqlQueryBindingCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\SqlQueryBindingParameter as SqlQueryBindingParameterCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\SqlQueryLog as SqlQueryLogCtrlr;
+use Anshu8858\VisitorTracker\Http\Ctrlr\SystemClass as SystemClassCtrlr;
+
 use Anshu8858\VisitorTracker\Repositories\Message as MessageRepository;
 use Anshu8858\VisitorTracker\Services\Authentication;
 use Anshu8858\VisitorTracker\Support\Cache;
@@ -44,57 +72,10 @@ use PragmaRX\Support\GeoIp\GeoIp;
 use PragmaRX\Support\PhpSession;
 use PragmaRX\Tracker\Vendor\Laravel\Artisan\UpdateGeoIp;
 
-use Spatie\LaravelPackageTools\Package;
+use Illuminate\Support\ServiceProvider;
 
-use Spatie\LaravelPackageTools\PackageServiceProvider;
-
-class VisitorTrackerServiceProvider extends PackageServiceProvider
-{
-    public function configurePackage(Package $package): void
-    {
-        /*
-         * This class is a Package Service Provider
-         *
-         * More info: https://github.com/spatie/laravel-package-tools
-         */
-        $package
-            ->name('visitor-tracker')
-            ->hasConfigFile()
-            ->hasViews()
-            ->hasMigration([
-                'create_avt_agents_table',
-                'create_avt_connections_table',
-                'create_avt_cookies_table',
-                'create_avt_devices_table',
-                'create_avt_domains_table',
-                'create_avt_errors_table',
-                'create_avt_events_log_table',
-                'create_avt_events_table',
-                'create_avt_geoip_table',
-                'create_avt_languages_table',
-                'create_avt_log_table',
-                'create_avt_paths_table',
-                'create_avt_queries_arguments_table',
-                'create_avt_queries_table',
-                'create_avt_referer_search_term_table',
-                'create_avt_referers_table',
-                'create_avt_route_path_parameters_table',
-                'create_avt_routes_paths_table',
-                'create_avt_routes_table',
-                'create_avt_sessions_table',
-                'create_avt_sql_queries_log_table',
-                'create_avt_sql_queries_table',
-                'create_avt_sql_query_bindings_parameters_table',
-                'create_avt_sql_query_bindings_table',
-                'create_avt_system_classes_table',
-            ])
-            ->hasCommand(VisitorTrackerCommand::class);
-    }
-
-
-    protected $packageVendor = 'pragmarx';
-    protected $packageName = 'tracker';
-    protected $packageNameCapitalized = 'Tracker';
+class VisitorTrackerServiceProvider extends ServiceProvider
+{    
     protected $repositoryManagerIsBooted = false;
 
     /**
@@ -104,7 +85,7 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
      */
     protected $defer = false;
     protected $userChecked = false;
-    protected $tracker;
+    protected $avt;
 
     /**
      * Bootstrap the application events.
@@ -113,20 +94,35 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
      */
     public function boot()
     {
-        parent::boot();
+        // routes
+        //if (!$this->app->routesAreCached()) {
+        //    require __DIR__ . '/Http/routes.php';
+        //}
 
-        if (! $this->getConfig('enabled')) {
+        // views
+        //$this->loadViewsFrom(__DIR__ . '/Views', 'visitlog');
+
+        // publish our files over to main laravel app
+        $this->publishes([
+            __DIR__ . '/config/avt.php' => config_path('avt.php'),
+            __DIR__ . '/database/migrations' => database_path('migrations/avt/')
+        ]);
+
+
+
+        $key = $this->packageName . ('enabled' ? '.' . 'enabled' : '');
+        if (! $this->app['config']->get($key)) {
             return false;
         }
 
         //$this->loadRoutes();
         $this->registerErrorHandler();
 
-        if (! $this->getConfig('use_middleware')) {
+        $key = $this->packageName . ('use_middleware' ? '.' . 'use_middleware' : '');
+        if (! $this->app['config']->get($key)) {
             $this->bootTracker();
         }
 
-        $this->loadTranslations();
     }
 
     /**
@@ -146,12 +142,9 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
      */
     public function register()
     {
-        parent::register();
-
         if ($this->getConfig('enabled')) {
-            $this->registerAuthentication();
             $this->registerCache();
-            $this->registerRepositories();
+            $this->registerCtrlr();
             $this->registerTracker();
             $this->registerTablesCommand();
             $this->registerUpdateGeoIpCommand();
@@ -159,7 +152,6 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
             $this->registerUserCheckCallback();
             $this->registerSqlQueryLogWatcher();
             $this->registerGlobalEventLogger();
-            //$this->registerDatatables();
             $this->registerMessageRepository();
             //$this->registerGlobalViewComposers();
         }
@@ -172,7 +164,7 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
      */
     public function provides()
     {
-        return ['tracker'];
+        return ['avt'];
     }
 
     /**
@@ -183,24 +175,24 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
      */
     protected function registerTracker()
     {
-        $this->app->singleton('tracker', function ($app) {
-            $app['tracker.loaded'] = true;
+        $this->app->singleton('avt', function ($app) {
+            $app['avt.loaded'] = true;
 
             return new Tracker(
-                $app['tracker.config'],
-                $app['tracker.repositories'],
+                $app['avt.config'],
+                $app['avt.mgr'],
                 $app['request'],
                 $app['router'],
                 $app['log'],
                 $app,
-                $app['tracker.messages']
+                $app['avt.msg']
             );
         });
     }
 
-    public function registerRepositories()
+    public function registerCtrlr()
     {
-        $this->app->singleton('tracker.repositories', function ($app) {
+        $this->app->singleton('avt.mgr', function ($app) {
             try {
                 $uaParser = new UserAgentParser($app->make('path.base'));
             } catch (\Exception $exception) {
@@ -235,80 +227,73 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
             $sqlQueryBindingMdl = new SqlQueryBinding;
             $sqlQueryBindingParameterMdl = new SqlQueryBindingParameter;
 
-            $logRepository = new Log($logModel);
-            $connectionRepository = new Connection($connectionModel);
-            $sqlQueryBindingRepository = new SqlQueryBinding($sqlQueryBindingModel);
+            // Ctrlr
+            
+            $logCtrlr = new LogCtrlr($logMdl);
+            $connectionCtrlr = new ConnectionCtrlr($connectionMdl);
+            $sqlQueryBindingCtrlr = new SqlQueryBindingCtrlr($sqlQueryBindingMdl);
+            $sqlQueryBindingParameterCtrlr = new SqlQueryBindingParameterCtrlr($sqlQueryBindingParameterMdl);
+            $sqlQueryLogCtrlr = new SqlQueryLogCtrlr($sqlQueryLogMdl);
 
-            $sqlQueryBindingParameterRepository = new SqlQueryBindingParameter($sqlQueryBindingParameterModel);
-
-            $sqlQueryLogRepository = new SqlQueryLog($sqlQueryLogModel);
-            $sqlQueryRepository = new SqlQuery(
-                $sqlQueryModel,
-                $sqlQueryLogRepository,
-                $sqlQueryBindingRepository,
-                $sqlQueryBindingParameterRepository,
-                $connectionRepository,
-                $logRepository,
-                $app['tracker.config']
+            $sqlQueryCtrlr = new SqlQueryCtrlr(
+                $sqlQueryMdl,
+                $sqlQueryLogCtrlr,
+                $sqlQueryBindingCtrlr,
+                $sqlQueryBindingParameterCtrlr,
+                $connectionCtrlr,
+                $logCtrlr,
+                $app['avt.config']
             );
 
-            $eventLogRepository = new EventLog($eventLogModel);
-            $systemClassRepository = new SystemClass($systemClassModel);
-            $eventRepository = new Event(
-                $eventModel,
-                $app['tracker.events'],
-                $eventLogRepository,
-                $systemClassRepository,
-                $logRepository,
-                $app['tracker.config']
+            $routeCtrlr = new RouteCtrlr($routeMdl, $app['avt.config']);
+            $systemClassCtrlr = new SystemClassCtrlr($systemClassMdl);
+            $eventLogCtrlr = new EventLogCtrlr($eventLogMdl);
+            $eventCtrlr = new EventCtrlr(
+                $eventMdl,
+                $app['avt.events'],
+                $eventLogCtrlr,
+                $systemClassCtrlr,
+                $logCtrlr,
+                $app['avt.config']
             );
 
-            $routeRepository = new Route(
-                $routeModel,
-                $app['tracker.config']
-            );
 
             $crawlerDetect = new CrawlerDetector(
                 $app['request']->headers->all(),
                 $app['request']->server('HTTP_USER_AGENT')
             );
 
-            $manager = new RepositoryManager(
+            $manager = new VisitorTrackerMgr(
                 new GeoIp($this->getConfig('geoip_database_path')),
                 new MobileDetect(),
                 $uaParser,
-                $app['tracker.authentication'],
                 $app['session.store'],
-                $app['tracker.config'],
-                new Session(
-                    $sessionModel,
-                    $app['tracker.config'],
-                    new PhpSession()
-                ),
-                $logRepository,
-                new Path($pathModel),
-                new Query($queryModel),
-                new QueryArgument($queryArgumentModel),
-                new Agent($agentModel),
-                new Device($deviceModel),
-                new Cookie($cookieModel, $app['tracker.config'], $app['request'], $app['cookie']),
-                new Domain($domainModel),
-                new Referer($refererModel, $refererSearchTermModel, $this->getAppUrl(), $app->make('PragmaRX\Tracker\Support\RefererParser')),
-                $routeRepository,
-                new RoutePath($routePathModel),
-                new RoutePathParameter($routePathParameterModel),
-                new Error($errorModel),
-                new GeoIpRepository($geoipModel),
-                $sqlQueryRepository,
-                $sqlQueryBindingRepository,
-                $sqlQueryBindingParameterRepository,
-                $sqlQueryLogRepository,
-                $connectionRepository,
-                $eventRepository,
-                $eventLogRepository,
-                $systemClassRepository,
+                $app['avt.config'],
+                new SessionCtrlr($sessionMdl, $app['avt.config'], new PhpSession()),
+                $logCtrlr,
+                new PathCtrlr($pathMdl),
+                new QueryCtrlr($queryMdl),
+                new QueryArgumentCtrlr($queryArgumentMdl),
+                new AgentCtrlr($agentMdl),
+                new DeviceCtrlr($deviceMdl),
+                new CookieCtrlr($cookieMdl, $app['avt.config'], $app['request'], $app['cookie']),
+                new DomainCtrlr($domainMdl),
+                new RefererCtrlr($refererMdl, $refererSearchTermMdl, $this->getAppUrl(), $app->make('Anshu8858\VisitorTracker\Support\RefererParser')),
+                $routeCtrlr,
+                new RoutePathCtrlr($routePathMdl),
+                new RoutePathParameterCtrlr($routePathParameterMdl),
+                new ErrorCtrlr($errorMdl),
+                new GeoIpCtrlr($geoipMdl),
+                $sqlQueryCtrlr,
+                $sqlQueryBindingCtrlr,
+                $sqlQueryBindingParameterCtrlr,
+                $sqlQueryLogCtrlr,
+                $connectionCtrlr,
+                $eventCtrlr,
+                $eventLogCtrlr,
+                $systemClassCtrlr,
                 $crawlerDetect,
-                new Language($languageModel),
+                new LanguageCtrlr($languageMdl),
                 new LanguageDetect()
             );
 
@@ -318,27 +303,21 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
         });
     }
 
-    public function registerAuthentication()
-    {
-        $this->app->singleton('tracker.authentication', function ($app) {
-            return new Authentication($app['tracker.config'], $app);
-        });
-    }
 
     public function registerCache()
     {
-        $this->app->singleton('tracker.cache', function ($app) {
-            return new Cache($app['tracker.config'], $app);
+        $this->app->singleton('avt.cache', function ($app) {
+            return new Cache($app['avt.config'], $app);
         });
     }
 
     protected function registerTablesCommand()
     {
-        $this->app->singleton('tracker.tables.command', function ($app) {
+        $this->app->singleton('avt.tables.command', function ($app) {
             return new TablesCommand();
         });
 
-        $this->commands('tracker.tables.command');
+        $this->commands('avt.tables.command');
     }
 
     protected function registerExecutionCallback()
@@ -370,28 +349,6 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
         }
     }
 
-    /**
-     * @param string $modelName
-     */
-    protected function instantiateModel($modelName)
-    {
-        $model = $this->getConfig($modelName);
-        if (! $model) {
-            $message = "Tracker: Model not found for '$modelName'.";
-            $this->app['log']->error($message);
-
-            throw new \Exception($message);
-        }
-
-        $model = new $model();
-        $model->setConfig($this->app['tracker.config']);
-
-        if ($connection = $this->getConfig('connection')) {
-            $model->setConnection($connection);
-        }
-
-        return $model;
-    }
 
     protected function registerSqlQueryLogWatcher()
     {
@@ -438,96 +395,36 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
     {
         $me = $this;
 
-        $this->app->singleton('tracker.events', function ($app) {
+        $this->app->singleton('avt.events', function ($app) {
             return new EventStorage();
         });
 
         $this->app['events']->listen('*', function ($object = null) use ($me) {
-            if ($me->app['tracker.events']->isOff() || ! $me->isFullyBooted()) {
+            if ($me->app['avt.events']->isOff() || ! $me->isFullyBooted()) {
                 return;
             }
 
             // To avoid infinite recursion, event tracking while logging events
             // must be turned off
-            $me->app['tracker.events']->turnOff();
+            $me->app['avt.events']->turnOff();
 
             // Log events even before application is ready
-            // $me->app['tracker.events']->logEvent(
+            // $me->app['avt.events']->logEvent(
             //    $me->app['events']->firing(),
             //    $object
             // );
             // TODO: we have to investigate a way of doing this
 
             // Can only send events to database after application is ready
-            if (isset($me->app['tracker.loaded'])) {
+            if (isset($me->app['avt.loaded'])) {
                 $me->getTracker()->logEvents();
             }
 
             // Turn the event tracking to on again
-            $me->app['tracker.events']->turnOn();
+            $me->app['avt.events']->turnOn();
         });
     }
 
-    /*
-    protected function loadRoutes()
-    {
-        if (!$this->getConfig('stats_panel_enabled')) {
-            return false;
-        }
-
-        $prefix = $this->getConfig('stats_base_uri');
-        $namespace = $this->getConfig('stats_controllers_namespace');
-
-        $filters = [];
-
-        if ($before = $this->getConfig('stats_routes_before_filter')) {
-            $filters['before'] = $before;
-        }
-
-        if ($after = $this->getConfig('stats_routes_after_filter')) {
-            $filters['after'] = $after;
-        }
-
-        if ($middleware = $this->getConfig('stats_routes_middleware')) {
-            $filters['middleware'] = $middleware;
-        }
-
-        $router = $this->app->make('router');
-
-        $router->group(['namespace' => $namespace], function () use ($prefix, $router, $filters) {
-            $router->group($filters, function () use ($prefix, $router) {
-                $router->group(['prefix' => $prefix], function ($router) {
-                    $router->get('/', ['as' => 'tracker.stats.index', 'uses' => 'Stats@index']);
-
-                    $router->get('log/{uuid}', ['as' => 'tracker.stats.log', 'uses' => 'Stats@log']);
-
-                    $router->get('api/pageviews', ['as' => 'tracker.stats.api.pageviews', 'uses' => 'Stats@apiPageviews']);
-
-                    $router->get('api/pageviewsbycountry', ['as' => 'tracker.stats.api.pageviewsbycountry', 'uses' => 'Stats@apiPageviewsByCountry']);
-
-                    $router->get('api/log/{uuid}', ['as' => 'tracker.stats.api.log', 'uses' => 'Stats@apiLog']);
-
-                    $router->get('api/errors', ['as' => 'tracker.stats.api.errors', 'uses' => 'Stats@apiErrors']);
-
-                    $router->get('api/events', ['as' => 'tracker.stats.api.events', 'uses' => 'Stats@apiEvents']);
-
-                    $router->get('api/users', ['as' => 'tracker.stats.api.users', 'uses' => 'Stats@apiUsers']);
-
-                    $router->get('api/visits', ['as' => 'tracker.stats.api.visits', 'uses' => 'Stats@apiVisits']);
-                });
-            });
-        });
-    }
-
-
-    protected function registerDatatables()
-    {
-        $this->registerServiceProvider('Bllim\Datatables\DatatablesServiceProvider');
-
-        $this->registerServiceAlias('Datatable', 'Bllim\Datatables\Facade\Datatables');
-    }
-
-    */
 
     /**
      * Get the current package directory.
@@ -547,70 +444,27 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
         $this->getTracker()->boot();
     }
 
-    /**
-     * Register global view composers.
-
-    protected function registerGlobalViewComposers()
-    {
-        $me = $this;
-
-        $this->app->make('view')->composer('pragmarx/tracker::*', function ($view) use ($me) {
-            $view->with('stats_layout', $me->getConfig('stats_layout'));
-
-            $template_path = url('/').$me->getConfig('stats_template_path');
-
-            $view->with('stats_template_path', $template_path);
-        });
-    }
-
-    */
 
     protected function registerUpdateGeoIpCommand()
     {
-        $this->app->singleton('tracker.updategeoip.command', function ($app) {
+        $this->app->singleton('avt.updategeoip.command', function ($app) {
             return new UpdateGeoIp();
         });
 
-        $this->commands('tracker.updategeoip.command');
+        $this->commands('avt.updategeoip.command');
     }
 
-    protected function registerUserCheckCallback()
-    {
-        $me = $this;
-
-        $this->app['events']->listen('router.before', function ($object = null) use ($me) {
-
-            // get auth bindings to check
-            $bindings = $me->getConfig('authentication_ioc_binding');
-
-            // check if all bindings are resolved
-            $checked_bindings = array_map(function ($abstract) use ($me) {
-                return $me->app->resolved($abstract);
-            }, $bindings);
-
-            $all_bindings_resolved =
-                (! in_array(false, $checked_bindings, true)) ?: false;
-
-            if ($me->tracker &&
-                ! $me->userChecked &&
-                $me->getConfig('log_users') &&
-                $all_bindings_resolved
-            ) {
-                $me->userChecked = $me->getTracker()->checkCurrentUser();
-            }
-        });
-    }
 
     /**
      * @return Tracker
      */
     public function getTracker()
     {
-        if (! $this->tracker) {
-            $this->tracker = $this->app['tracker'];
+        if (! $this->avt) {
+            $this->avt = $this->app['avt'];
         }
 
-        return $this->tracker;
+        return $this->avt;
     }
 
     public function getRootDirectory()
@@ -623,18 +477,163 @@ class VisitorTrackerServiceProvider extends PackageServiceProvider
         return $this->app['request']->url();
     }
 
-    public function loadTranslations()
-    {
-        $this->loadTranslationsFrom(__DIR__.'/../../lang', 'tracker');
-    }
-
     /**
      * Register the message repository.
      */
     protected function registerMessageRepository()
     {
-        $this->app->singleton('tracker.messages', function () {
+        $this->app->singleton('avt.messages', function () {
             return new MessageRepository();
         });
+    }
+
+
+
+    protected function getRootDirectory()
+    {
+        return $this->getPackageDir();
+    }
+
+    /**
+     * Bootstrap the application events.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        $this->publishFiles();
+
+        $this->loadViews();
+    }
+
+    /**
+     * Boot for the child ServiceProvider
+     *
+     * @return void
+     */
+    protected function preRegister()
+    {
+        if (!$this->registered) {
+            $this->loadHelper();
+
+            $this->mergeConfig();
+
+            $this->registerNamespace();
+
+            $this->registerConfig();
+
+            $this->registerFilesystem();
+
+            $this->registered = true;
+        }
+    }
+
+    /**
+     * Register the service provider.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        $this->preRegister();
+    }
+
+    /**
+     * Get a configuration value
+     *
+     * @param  string $key
+     * @return mixed
+     */
+    public function getConfig($key = null)
+    {
+        // Waiting for https://github.com/laravel/framework/pull/7440
+        // return $this->app['config']->get("{$this->packageVendor}.{$this->packageName}.config.{$key}");
+
+        $key = $this->packageName . ($key ? '.' . $key : '');
+
+        return $this->app['config']->get($key);
+    }
+
+    /**
+     * Register the configuration object
+     *
+     * @return void
+     */
+    private function registerConfig()
+    {
+        $this->app->singleton($this->packageName . '.config', function ($app) {
+            // Waiting for https://github.com/laravel/framework/pull/7440
+            // return new Config($app['config'], $this->packageNamespace . '.config.');
+
+            return new Config($app['config'], $this->packageNamespace . '.');
+        });
+    }
+
+    /**
+     * Register the Filesystem driver used by the child ServiceProvider
+     *
+     * @return void
+     */
+    private function registerFileSystem()
+    {
+        $this->app->singleton($this->packageName . '.fileSystem', function ($app) {
+            return new Filesystem;
+        });
+    }
+
+    public function registerServiceAlias($name, $class)
+    {
+        IlluminateAliasLoader::getInstance()->alias($name, $class);
+    }
+
+    public function registerServiceProvider($class)
+    {
+        $this->app->register($class);
+    }
+
+    private function publishFiles()
+    {
+        if (file_exists($configFile = $this->getRootDirectory() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php')) {
+            $this->publishes(
+                [$configFile => config_path($this->packageName . '.php')],
+                'config'
+            );
+        }
+
+        if (file_exists($migrationsPath = $this->getRootDirectory() . DIRECTORY_SEPARATOR . 'migrations')) {
+            $this->publishes(
+                [$migrationsPath => base_path('database' . DIRECTORY_SEPARATOR . 'migrations')],
+                'migrations'
+            );
+        }
+    }
+
+    private function mergeConfig()
+    {
+        if (file_exists($configFile = $this->getRootDirectory() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php')) {
+            $this->mergeConfigFrom(
+                $configFile, $this->packageName
+            );
+        }
+    }
+
+    private function registerNamespace()
+    {
+        // Waiting for https://github.com/laravel/framework/pull/7440
+        // $this->packageNamespace = "$this->packageVendor.$this->packageName";
+
+        $this->packageNamespace = $this->packageName;
+    }
+
+    private function loadViews()
+    {
+        if (file_exists($viewsFolder = $this->getRootDirectory() . DIRECTORY_SEPARATOR . 'views')) {
+            $this->loadViewsFrom($viewsFolder, "{$this->packageVendor}/{$this->packageName}");
+        }
+    }
+
+    private function loadHelper()
+    {
+        require_once('helpers.php');
     }
 }

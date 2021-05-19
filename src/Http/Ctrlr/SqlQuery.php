@@ -1,67 +1,41 @@
 <?php
 
-namespace Anshu8858\TrackerVisitor\Models;
+namespace Anshu8858\VisitorTracker\Http\Ctrlr;
 
 use PragmaRX\Support\Config;
 
 class SqlQuery extends Base
 {
-    protected $table = 'avt_sql_queries';
-
     private $queries = [];
-
-    /**
-     * @var SqlQueryLog
-     */
-    private $sqlQueryLogRepository;
-
-    /**
-     * @var SqlQueryBinding
-     */
-    private $sqlQueryBindingRepository;
-
-    /**
-     * @var SqlQueryBindingParameter
-     */
-    private $sqlQueryBindingParameterRepository;
-
-    /**
-     * @var Connection
-     */
-    private $connectionRepository;
-
-    /**
-     * @var Log
-     */
-    private $logRepository;
-
-    /**
-     * @var \PragmaRX\Support\Config
-     */
+    private $sqlQueryLogCtrlr;
+    private $sqlQueryBindingCtrlr;
+    private $sqlQueryBindingParameterCtrlr;
+    private $connectionCtrlr;
+    private $logCtrlr;
     private $config;
 
     public function __construct(
         $model,
-        SqlQueryLog $sqlQueryLogRepository,
-        SqlQueryBinding $sqlQueryBindingRepository,
-        SqlQueryBindingParameter $sqlQueryBindingParameterRepository,
-        Connection $connectionRepository,
-        Log $logRepository,
+        SqlQueryLog $sqlQueryLogCtrlr,
+        SqlQueryBinding $sqlQueryBindingCtrlr,
+        SqlQueryBindingParameter $sqlQueryBindingParameterCtrlr,
+        Connection $connectionCtrlr,
+        Log $logCtrlr,
         Config $config
     ) {
         parent::__construct($model);
 
-        $this->sqlQueryLogRepository = $sqlQueryLogRepository;
-        $this->sqlQueryBindingRepository = $sqlQueryBindingRepository;
-        $this->sqlQueryBindingParameterRepository = $sqlQueryBindingParameterRepository;
-        $this->connectionRepository = $connectionRepository;
-        $this->logRepository = $logRepository;
+        $this->sqlQueryLogCtrlr = $sqlQueryLogCtrlr;
+        $this->sqlQueryBindingCtrlr = $sqlQueryBindingCtrlr;
+        $this->sqlQueryBindingParameterCtrlr = $sqlQueryBindingParameterCtrlr;
+        $this->connectionCtrlr = $connectionCtrlr;
+        $this->logCtrlr = $logCtrlr;
         $this->config = $config;
     }
 
     public function fire()
     {
-        if (! $this->logRepository->getCurrentLogId()) {
+        if (! $this->logCtrlr->getCurrentLogId()) {
             return;
         }
 
@@ -99,7 +73,7 @@ class SqlQuery extends Base
             return;
         }
 
-        $connectionId = $this->connectionRepository->findOrCreate(
+        $connectionId = $this->connectionCtrlr->findOrCreate(
             ['name' => $name],
             ['name']
         );
@@ -117,7 +91,7 @@ class SqlQuery extends Base
         if ($bindings && $this->canLogBindings()) {
             $bindingsSerialized = $this->serializeBindings($bindings);
 
-            $sqlQuery_bindings_id = $this->sqlQueryBindingRepository->findOrCreate(
+            $sqlQuery_bindings_id = $this->sqlQueryBindingCtrlr->findOrCreate(
                 ['sha1' => sha1($bindingsSerialized), 'serialized' => $bindingsSerialized],
                 ['sha1'],
                 $created
@@ -125,7 +99,7 @@ class SqlQuery extends Base
 
             if ($created) {
                 foreach ($bindings as $parameter => $value) {
-                    $this->sqlQueryBindingParameterRepository->create(
+                    $this->sqlQueryBindingParameterCtrlr->create(
                         [
                             'sql_query_bindings_id' => $sqlQuery_bindings_id,
 
@@ -139,9 +113,9 @@ class SqlQuery extends Base
             }
         }
 
-        $this->sqlQueryLogRepository->create(
+        $this->sqlQueryLogCtrlr->create(
             [
-                'log_id' => $this->logRepository->getCurrentLogId(),
+                'log_id' => $this->logCtrlr->getCurrentLogId(),
                 'sql_query_id' => $sqlQueryId,
             ]
         );

@@ -1,13 +1,8 @@
 <?php
 
-namespace App\Models\Avt;
+namespace Anshu8858\TrackerVisitor\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Connection extends Model
+class Connection extends Base
 {
-    use HasFactory;
-
     protected $table = 'avt_connections';
 }

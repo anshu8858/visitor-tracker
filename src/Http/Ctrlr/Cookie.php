@@ -1,6 +1,6 @@
 <?php
 
-namespace Anshu8858\TrackerVisitor\Models;
+namespace Anshu8858\VisitorTracker\Http\Ctrlr;
 
 use Illuminate\Cookie\CookieJar;
 use Illuminate\Http\Request;
@@ -8,10 +8,8 @@ use Illuminate\Http\Request;
 use PragmaRX\Support\Config;
 use Ramsey\Uuid\Uuid as UUID;
 
-class Cookie extends Base
+class Cookie extends CtrlrMgr
 {
-    protected $table = 'avt_cookies';
-
     private $config;
     private $request;
     private $cookieJar;

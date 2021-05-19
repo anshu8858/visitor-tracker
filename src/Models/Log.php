@@ -1,14 +1,9 @@
 <?php
 
-namespace App\Models\Avt;
+namespace Anshu8858\TrackerVisitor\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Log extends Model
+class Log extends Base
 {
-    use HasFactory;
-
     protected $table = 'avt_log';
 
     protected $currentLogId;

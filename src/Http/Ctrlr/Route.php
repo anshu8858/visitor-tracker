@@ -1,14 +1,11 @@
 <?php
 
-namespace Anshu8858\TrackerVisitor\Models;
+namespace Anshu8858\VisitorTracker\Http\Ctrlr;
 
 use PragmaRX\Support\Config;
 
-class Route extends Base
+class Route extends CtrlrMgr
 {
-    protected $table = 'avt_routes';
-
-
     public function __construct($model, Config $config)
     {
         parent::__construct($model);
@@ -37,8 +34,4 @@ class Route extends Base
     }
 
 
-    public function paths()
-    {
-        return $this->hasMany($this->getConfig()->get('route_path_model'));
-    }
 }

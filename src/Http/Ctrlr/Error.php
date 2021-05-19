@@ -1,13 +1,9 @@
 <?php
 
-namespace Anshu8858\TrackerVisitor\Models;
+namespace Anshu8858\VisitorTracker\Http\Ctrlr;
 
-class Error extends Base
+class Error extends CtrlrMgr
 {
-    use HasFactory;
-
-    protected $table = 'avt_errors';
-
     public function getMessageFromThrowable($throwable)
     {
         if ($message = $throwable->getMessage()) {

@@ -1,13 +1,8 @@
 <?php
 
-namespace App\Models\Avt;
+namespace Anshu8858\TrackerVisitor\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Agent extends Model
+class Agent extends Base
 {
-    use HasFactory;
-
     protected $table = 'avt_agents';
 }
